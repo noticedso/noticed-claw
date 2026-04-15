@@ -145,8 +145,11 @@ export interface SeedProfile {
  * Generate a single developer profile deterministically.
  */
 export function generateProfile(index: number, rng: SeededRandom): SeedProfile {
+  // Cross first/last with offset so 100 profiles get unique combinations
+  // first name cycles 0-49, last name shifts by floor(index/50) to avoid same pairing
   const firstName = FIRST_NAMES[index % FIRST_NAMES.length];
-  const lastName = LAST_NAMES[index % LAST_NAMES.length];
+  const lastNameOffset = Math.floor(index / FIRST_NAMES.length) * 7; // prime offset
+  const lastName = LAST_NAMES[(index + lastNameOffset) % LAST_NAMES.length];
   const name = `${firstName} ${lastName}`;
   const login = `${firstName.toLowerCase()}${lastName.toLowerCase()}${index}`;
 
