@@ -7,7 +7,7 @@ export default function Home() {
       <p className="text-gray-600 mb-8">developer intelligence agent workshop</p>
       <div className="flex gap-4">
         <Link
-          href="/chat"
+          href="/dashboard/chat"
           className="bg-blue-500 text-white rounded-lg px-6 py-3 text-sm hover:bg-blue-600"
         >
           open chat
