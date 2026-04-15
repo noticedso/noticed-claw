@@ -6,7 +6,9 @@ vi.mock("@/supabase/client", () => ({
     from: vi.fn().mockReturnValue({
       insert: vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: { id: "msg-1" }, error: null }),
+          single: vi
+            .fn()
+            .mockResolvedValue({ data: { id: "msg-1" }, error: null }),
         }),
       }),
       update: vi.fn().mockReturnValue({
@@ -14,7 +16,9 @@ vi.mock("@/supabase/client", () => ({
       }),
       upsert: vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: { id: "q-1" }, error: null }),
+          single: vi
+            .fn()
+            .mockResolvedValue({ data: { id: "q-1" }, error: null }),
         }),
       }),
     }),
@@ -43,14 +47,32 @@ vi.mock("@/lib/agent/agent-router", () => ({
       id: "t1",
       userId: "u1",
       name: "Test",
-      config: { model: "gpt-4o-mini", persona: "donna", heartbeatEnabled: false, heartbeatIntervalMs: 3600000, activeHoursStart: 9, activeHoursEnd: 21, timezone: "UTC", toolPolicy: {} },
+      config: {
+        model: "gpt-4o-mini",
+        persona: "donna",
+        heartbeatEnabled: false,
+        heartbeatIntervalMs: 3600000,
+        activeHoursStart: 9,
+        activeHoursEnd: 21,
+        timezone: "UTC",
+        toolPolicy: {},
+      },
       nextHeartbeatAt: null,
       createdAt: new Date().toISOString(),
     },
     session: {
-      id: "s1", tenantId: "t1", sessionKey: "k", channel: "webchat", chatType: "dm",
-      totalTokens: 0, inputTokens: 0, outputTokens: 0, compactionCount: 0,
-      metadata: {}, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      id: "s1",
+      tenantId: "t1",
+      sessionKey: "k",
+      channel: "webchat",
+      chatType: "dm",
+      totalTokens: 0,
+      inputTokens: 0,
+      outputTokens: 0,
+      compactionCount: 0,
+      metadata: {},
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     },
     messages: [],
     workspaceFiles: [],
@@ -106,7 +128,7 @@ describe("runAgentTurn", () => {
 
   it("returns content from non-silent reply", async () => {
     vi.mocked(generateText).mockResolvedValue({
-      text: "hello from claw",
+      text: "hello from noticed-claw",
       steps: [],
       usage: { promptTokens: 100, completionTokens: 50 },
     } as never);
@@ -120,7 +142,7 @@ describe("runAgentTurn", () => {
       peerId: "u1",
     });
 
-    expect(result.content).toBe("hello from claw");
+    expect(result.content).toBe("hello from noticed-claw");
     expect(result.silent).toBe(false);
   });
 

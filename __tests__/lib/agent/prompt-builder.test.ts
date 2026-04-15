@@ -102,7 +102,7 @@ describe("buildSystemPrompt", () => {
 
   it("includes identity section", () => {
     const prompt = buildSystemPrompt(mockContext, "full");
-    expect(prompt).toContain("you are claw");
+    expect(prompt).toContain("you are noticed-claw");
   });
 
   it("includes runtime info in full mode", () => {

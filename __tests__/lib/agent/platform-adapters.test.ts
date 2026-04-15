@@ -10,14 +10,14 @@ describe("extractTelegramPayload", () => {
       message: {
         chat: { id: 12345, type: "private" },
         from: { id: 67890 },
-        text: "hello claw",
+        text: "hello noticed-claw",
       },
     };
     const result = extractTelegramPayload(body);
     expect(result).not.toBeNull();
     expect(result!.threadId).toBe("12345");
     expect(result!.peerId).toBe("67890");
-    expect(result!.userMessage).toBe("hello claw");
+    expect(result!.userMessage).toBe("hello noticed-claw");
     expect(result!.chatType).toBe("dm");
     expect(result!.platform).toBe("telegram");
   });
@@ -80,7 +80,12 @@ describe("extractSlackPayload", () => {
 
   it("returns null for bot messages (subtype present)", () => {
     const body = {
-      event: { type: "message", subtype: "bot_message", channel: "C1", text: "hi" },
+      event: {
+        type: "message",
+        subtype: "bot_message",
+        channel: "C1",
+        text: "hi",
+      },
     };
     expect(extractSlackPayload(body)).toBeNull();
   });

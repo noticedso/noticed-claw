@@ -3,7 +3,7 @@ import { createServerClient } from "@/supabase/client";
 import { runAgentTurnStreaming } from "@/lib/agent/stream-bridge";
 
 export async function POST(req: Request) {
-  // 1. Authenticate — get user from session cookie
+  // 1. Authenticate
   const authClient = await createAuthServerClient();
   const {
     data: { user },
@@ -13,8 +13,9 @@ export async function POST(req: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  // 2. Parse the user message
-  const { messages } = await req.json();
+  // 2. Parse request — messages + optional sessionId
+  const body = await req.json();
+  const { messages, sessionId } = body;
   const lastUserMessage = messages.findLast(
     (m: { role: string }) => m.role === "user"
   );
@@ -23,7 +24,7 @@ export async function POST(req: Request) {
     return new Response("No user message found", { status: 400 });
   }
 
-  // 3. Resolve or create the user's tenant (service role for admin ops)
+  // 3. Resolve tenant
   const supabase = createServerClient();
   let { data: tenant } = await supabase
     .from("tenants")
@@ -33,7 +34,6 @@ export async function POST(req: Request) {
     .single();
 
   if (!tenant) {
-    // Auto-create tenant on first chat
     const { data: newTenant, error } = await supabase
       .from("tenants")
       .insert({
@@ -61,8 +61,19 @@ export async function POST(req: Request) {
     tenant = newTenant;
   }
 
-  // 4. Build session key scoped to this user
-  const sessionKey = `tenant:${tenant.id}:webchat:dm:${user.id}`;
+  // 4. Resolve session key — use provided sessionId or default
+  let sessionKey: string;
+  if (sessionId) {
+    const { data: session } = await supabase
+      .from("sessions")
+      .select("session_key")
+      .eq("id", sessionId)
+      .eq("tenant_id", tenant.id)
+      .single();
+    sessionKey = session?.session_key ?? `tenant:${tenant.id}:webchat:dm:${user.id}`;
+  } else {
+    sessionKey = `tenant:${tenant.id}:webchat:dm:${user.id}`;
+  }
 
   try {
     return await runAgentTurnStreaming(

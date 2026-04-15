@@ -12,7 +12,7 @@ export const DEFAULT_WORKSPACE_FILES: Record<string, string> = {
   "SOUL.md": "# personality\n\nbe helpful and genuine",
   "USER.md": "# user context\n\nno user info yet",
   "IDENTITY.md":
-    "# identity\n\nname: claw\nrole: developer intelligence agent",
+    "# identity\n\nname: noticed-claw\nrole: developer intelligence agent",
   "BOOTSTRAP.md":
     "# onboarding\n\nwelcome new users, help them set up their persona",
   "HEARTBEAT.md":
@@ -31,7 +31,7 @@ export const WORKSPACE_FILE_NAMES = Object.keys(DEFAULT_WORKSPACE_FILES);
  */
 export async function loadWorkspaceFiles(
   supabase: SupabaseClient,
-  tenantId: string
+  tenantId: string,
 ): Promise<WorkspaceFile[]> {
   const { data, error } = await supabase
     .from("workspace_files")
@@ -40,7 +40,8 @@ export async function loadWorkspaceFiles(
     .eq("is_deleted", false)
     .order("file_name");
 
-  if (error) throw new Error(`Failed to load workspace files: ${error.message}`);
+  if (error)
+    throw new Error(`Failed to load workspace files: ${error.message}`);
 
   return (data || []).map((row: Record<string, unknown>) => ({
     id: row.id as string,
@@ -58,7 +59,7 @@ export async function loadWorkspaceFiles(
  */
 export async function initializeWorkspaceFiles(
   supabase: SupabaseClient,
-  tenantId: string
+  tenantId: string,
 ): Promise<void> {
   const rows = Object.entries(DEFAULT_WORKSPACE_FILES).map(
     ([fileName, content]) => ({
@@ -66,7 +67,7 @@ export async function initializeWorkspaceFiles(
       file_name: fileName,
       content,
       is_deleted: false,
-    })
+    }),
   );
 
   const { error } = await supabase
@@ -84,20 +85,18 @@ export async function updateWorkspaceFile(
   supabase: SupabaseClient,
   tenantId: string,
   fileName: string,
-  content: string
+  content: string,
 ): Promise<void> {
-  const { error } = await supabase
-    .from("workspace_files")
-    .upsert(
-      {
-        tenant_id: tenantId,
-        file_name: fileName,
-        content,
-        is_deleted: false,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "tenant_id,file_name" }
-    );
+  const { error } = await supabase.from("workspace_files").upsert(
+    {
+      tenant_id: tenantId,
+      file_name: fileName,
+      content,
+      is_deleted: false,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "tenant_id,file_name" },
+  );
 
   if (error)
     throw new Error(`Failed to update workspace file: ${error.message}`);
