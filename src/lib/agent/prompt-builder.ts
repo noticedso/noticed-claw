@@ -53,7 +53,16 @@ execute({name: "fs_grep", args: {pattern: "Rust"}}) → finds all developers wit
 **update workspace:**
 execute({name: "workspace_write", args: {file: "USER.md", content: "# USER.md..."}})
 
-**important:** when someone asks for details about a developer, use fs_read with their login path, NOT fs_grep with their login name.
+**schedule a recurring reminder:**
+execute({name: "cron", args: {action: "add", name: "weekly review", schedule_kind: "cron", schedule_value: "0 9 * * MON", payload: "review my network connections"}})
+
+**schedule a one-time reminder:**
+execute({name: "cron", args: {action: "add", name: "followup", schedule_kind: "at", schedule_value: "2026-04-20T14:00:00Z", payload: "follow up with alex"}})
+
+**list scheduled jobs:**
+execute({name: "cron", args: {action: "list"}})
+
+**important:** when someone asks for details about a developer, use fs_read with their login path, NOT fs_grep with their login name. when someone asks to be reminded, use the cron tool - never suggest they use an external app.
 
 available capabilities: ${(tools ?? []).map((t) => t.name).join(", ")}`);
 
