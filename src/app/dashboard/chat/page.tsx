@@ -30,26 +30,54 @@ export default function DashboardChatPage() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const fetchSessions = useCallback(async () => {
-    try {
-      const res = await fetch("/api/sessions");
-      if (res.ok) {
-        const data: SessionInfo[] = await res.json();
-        setSessions(data);
-        if (data.length > 0 && !activeSessionId) {
-          setActiveSessionId(data[0].id);
+  const loadSessionMessages = useCallback(
+    async (sessionId: string) => {
+      try {
+        const res = await fetch(`/api/sessions/${sessionId}/messages`);
+        if (res.ok) {
+          const data: Array<{ id: string; role: string; content: string }> =
+            await res.json();
+          setMessages(
+            data.map((m) => ({
+              id: m.id,
+              role: m.role as "user" | "assistant",
+              content: m.content,
+            }))
+          );
+        } else {
+          setMessages([]);
         }
+      } catch {
+        setMessages([]);
       }
-    } catch {
-      // ignore
-    } finally {
-      setLoadingSessions(false);
-    }
-  }, [activeSessionId]);
+    },
+    [setMessages]
+  );
 
   useEffect(() => {
-    fetchSessions();
-  }, [fetchSessions]);
+    let mounted = true;
+    async function init() {
+      try {
+        const res = await fetch("/api/sessions");
+        if (res.ok && mounted) {
+          const data: SessionInfo[] = await res.json();
+          setSessions(data);
+          if (data.length > 0) {
+            setActiveSessionId(data[0].id);
+            loadSessionMessages(data[0].id);
+          }
+        }
+      } catch {
+        // ignore
+      } finally {
+        if (mounted) setLoadingSessions(false);
+      }
+    }
+    init();
+    return () => {
+      mounted = false;
+    };
+  }, [loadSessionMessages]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -71,9 +99,9 @@ export default function DashboardChatPage() {
     }
   }
 
-  function handleSessionChange(sessionId: string) {
+  async function handleSessionChange(sessionId: string) {
     setActiveSessionId(sessionId);
-    setMessages([]);
+    await loadSessionMessages(sessionId);
   }
 
   function formatSessionLabel(session: SessionInfo) {
