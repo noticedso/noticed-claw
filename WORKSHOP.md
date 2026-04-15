@@ -10,8 +10,12 @@ a workshop by [noticed](https://noticed.so)
 - noticed is a personal agent that networks while you sleep
 - noticed maps your network, understands your intent, makes warm intros
 
+---
+
 - users can bring their own agent and use noticed purely as a data source
 - but we want every user to feel like they have a personal agent - with a persona, relationship memory, and active missions
+
+---
 
 - that means giving each user their own agent instance: the multi-tenant agent problem
 
@@ -35,6 +39,8 @@ Claude Code, OpenClaw, Codex, Deep Agents - these are all harnesses. the harness
 - [OpenClaw](https://github.com/open-claw) was our starting point because it's GOOD
 - most agent harnesses are built for **one user running one agent** - OpenClaw reads from local disk, Claude Code stores state in `~/.claude/`, Codex ties compaction to one session
 - **every implicit component must become an explicit, tenant-scoped subsystem:**
+
+---
 
 - **tenant isolation** - user A's memories, conversations, and workspace must be invisible to user B
 
