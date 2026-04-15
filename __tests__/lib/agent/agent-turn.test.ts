@@ -33,6 +33,7 @@ vi.mock("ai", () => ({
     steps: [],
     usage: { promptTokens: 100, completionTokens: 50 },
   }),
+  tool: vi.fn().mockImplementation((def: Record<string, unknown>) => def),
 }));
 
 vi.mock("@ai-sdk/openai", () => ({

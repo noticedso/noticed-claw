@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 
 vi.mock("ai", () => ({
   generateText: vi.fn(),
+  tool: vi.fn().mockImplementation((def: Record<string, unknown>) => def),
 }));
 
 vi.mock("@ai-sdk/openai", () => ({

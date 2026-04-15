@@ -16,10 +16,10 @@ export async function runEvals(): Promise<EvalRun> {
     const tenantId = crypto.randomUUID();
     const { error: tenantErr } = await supabase.from("tenants").insert({
       id: tenantId,
-      user_id: "eval-runner",
+      user_id: crypto.randomUUID(),
       name: `eval-${scenario.key}`,
       config: {
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         persona: "donna",
         heartbeatEnabled: false,
         heartbeatIntervalMs: 3600000,

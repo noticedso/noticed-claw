@@ -6,7 +6,6 @@ import { runLLM } from "./llm-runner";
 import { isSilentReply } from "./stream-bridge";
 import { resolveTools } from "./tools/registry";
 import { getAllBuiltinTools } from "./tools";
-import { getCodeModeTools } from "./tools/code-mode";
 import { shouldCompact, compactSession } from "./compaction";
 import { extractAndStoreMemories } from "./memory-manager";
 import { upsertSessionSummary } from "./session-awareness";
@@ -59,9 +58,6 @@ export async function runAgentTurn(
     return tool.execute(args, ctx);
   };
 
-  const codeModeTools = getCodeModeTools(executeCapability);
-  const allTools = [...codeModeTools];
-
   // 4. Build system prompt
   const systemPrompt = buildSystemPrompt(ctx, "full", resolvedTools);
 
@@ -73,8 +69,20 @@ export async function runAgentTurn(
     token_count: Math.ceil(input.userMessage.length / 4),
   });
 
-  // 6. Run LLM
-  const result = await runLLM(systemPrompt, ctx.messages, allTools, ctx);
+  // 6. Run LLM — append user message to context messages
+  const messagesForLLM = [
+    ...ctx.messages,
+    {
+      id: "user-current",
+      sessionId: ctx.session.id,
+      role: "user" as const,
+      content: input.userMessage,
+      tokenCount: Math.ceil(input.userMessage.length / 4),
+      compactedAt: null,
+      createdAt: new Date().toISOString(),
+    },
+  ];
+  const result = await runLLM(systemPrompt, messagesForLLM, resolvedTools, ctx);
 
   // 7. Silent check
   if (isSilentReply(result.content)) {

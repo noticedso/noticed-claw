@@ -1,6 +1,8 @@
-import { generateText, type CoreMessage, type CoreTool } from "ai";
+import { generateText, tool, type CoreMessage } from "ai";
 import { openai } from "@ai-sdk/openai";
+import { z } from "zod";
 import type { ToolDefinition, ToolCall, AgentContext, Message } from "./types";
+import { searchCapabilities, CAPABILITIES } from "./tools/capability-registry";
 
 export const MAX_TOOL_ITERATIONS = 10;
 
@@ -8,26 +10,6 @@ export interface LLMRunResult {
   content: string;
   toolCalls: ToolCall[];
   tokens: { input: number; output: number };
-}
-
-function convertToAISDKTools(
-  tools: ToolDefinition[],
-  ctx: AgentContext
-): Record<string, CoreTool> {
-  const sdkTools: Record<string, CoreTool> = {};
-
-  for (const tool of tools) {
-    sdkTools[tool.name] = {
-      description: tool.description,
-      parameters: tool.parameters as CoreTool["parameters"],
-      execute: async (args: Record<string, unknown>) => {
-        const result = await tool.execute(args, ctx);
-        return result;
-      },
-    };
-  }
-
-  return sdkTools;
 }
 
 function convertMessages(messages: Message[]): CoreMessage[] {
@@ -47,14 +29,53 @@ export async function runLLM(
   model?: string
 ): Promise<LLMRunResult> {
   const modelId = model ?? ctx.tenant.config.model ?? "gpt-4o";
-  const aiTools = convertToAISDKTools(tools, ctx);
   const coreMessages = convertMessages(messages);
+
+  // Build Zod-based tools (AI SDK v4 requires Zod schemas, not raw JSON Schema)
+  const zodTools = {
+    search: tool({
+      description:
+        "search available capabilities by keyword. returns names, descriptions, and parameter schemas.",
+      parameters: z.object({
+        query: z.string().describe("search keywords"),
+        category: z.string().optional().describe("optional category filter"),
+      }),
+      execute: async ({ query, category }) => {
+        let caps = CAPABILITIES;
+        if (category) caps = caps.filter((c) => c.category === category);
+        return searchCapabilities(caps, query, 5).map((r) => ({
+          name: r.name,
+          description: r.description,
+          category: r.category,
+        }));
+      },
+    }),
+    execute: tool({
+      description: "execute a capability by exact name with arguments",
+      parameters: z.object({
+        name: z.string().describe("capability name"),
+        args: z.record(z.unknown()).optional().describe("capability arguments"),
+      }),
+      execute: async ({ name, args }) => {
+        const t = tools.find((t) => t.name === name);
+        if (!t) {
+          const available = tools.map((t) => t.name).join(", ");
+          return { error: `capability not found: ${name}. available: ${available}` };
+        }
+        try {
+          return await t.execute(args ?? {}, ctx);
+        } catch (err) {
+          return { error: String(err) };
+        }
+      },
+    }),
+  };
 
   const result = await generateText({
     model: openai(modelId),
     system: systemPrompt,
     messages: coreMessages,
-    tools: aiTools,
+    tools: zodTools,
     maxSteps: MAX_TOOL_ITERATIONS,
   });
 

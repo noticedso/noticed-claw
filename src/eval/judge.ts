@@ -57,7 +57,13 @@ Score the agent's performance. Return ONLY valid JSON.`;
       messages: [{ role: "user", content: judgePrompt }],
     });
 
-    const parsed = JSON.parse(result.text);
+    // Strip markdown code fences if present
+    const cleaned = result.text
+      .replace(/```json\s*/g, "")
+      .replace(/```\s*/g, "")
+      .trim();
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : cleaned);
 
     return {
       coherence: clampScore(parsed.coherence),

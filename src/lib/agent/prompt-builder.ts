@@ -37,11 +37,23 @@ you have two meta-tools: **search** and **execute**.
 1. call **search** with a keyword to discover available capabilities
 2. call **execute** with the capability name and args to run it
 
-example flow:
-- user asks "who knows Rust?" → search({query: "search developers"}) → finds fs_grep → execute({name: "fs_grep", args: {pattern: "Rust"}})
-- user says "update my identity" → execute({name: "workspace_write", args: {file: "IDENTITY.md", content: "..."}})
-
 you do NOT need to search first if you already know the capability name. just call execute directly.
+
+## common patterns
+
+**browse the network:**
+execute({name: "fs_ls", args: {path: "/developers"}}) → returns list with name + skills summary
+
+**get a developer's full profile:**
+execute({name: "fs_read", args: {path: "/developers/alexchen0.md"}}) → returns name, bio, skills, repos, activity
+
+**search by skill:**
+execute({name: "fs_grep", args: {pattern: "Rust"}}) → finds all developers with that skill
+
+**update workspace:**
+execute({name: "workspace_write", args: {file: "USER.md", content: "# USER.md..."}})
+
+**important:** when someone asks for details about a developer, use fs_read with their login path, NOT fs_grep with their login name.
 
 available capabilities: ${(tools ?? []).map((t) => t.name).join(", ")}`);
 

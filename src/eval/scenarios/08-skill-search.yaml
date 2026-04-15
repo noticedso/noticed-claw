@@ -1,0 +1,9 @@
+key: skill_search
+description: Agent uses fs_grep to find developers by skill
+messages:
+  - role: user
+    content: "who in my network knows Rust?"
+expected:
+  uses_fs_grep: true
+  pattern_includes_rust: true
+  returns_developer_names: true

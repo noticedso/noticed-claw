@@ -1,0 +1,12 @@
+key: developer_details
+description: Agent uses fs_read (not fs_grep) to get details about a specific developer
+messages:
+  - role: user
+    content: "tell me about the developers on my network"
+  - role: user
+    content: "what does the first one do? give me their full profile"
+expected:
+  uses_fs_ls_or_fs_grep: true
+  uses_fs_read_for_detail: true
+  returns_developer_skills: true
+  returns_developer_repos: true
