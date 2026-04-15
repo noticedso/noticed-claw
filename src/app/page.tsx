@@ -19,6 +19,9 @@ export default function Home() {
           dashboard
         </Link>
       </div>
+      <p className="mt-8 text-xs text-gray-400">
+        sign in required for chat and dashboard
+      </p>
     </div>
   );
 }
