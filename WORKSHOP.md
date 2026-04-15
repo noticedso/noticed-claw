@@ -2,6 +2,8 @@
 
 a workshop by [noticed](https://noticed.so)
 
+noticed is a personal networking agent. It learns your intent, maps your network across GitHub, LinkedIn, email, and calendar, and surfaces the right opportunities at the right time.
+
 ---
 
 ## 1. the problem
