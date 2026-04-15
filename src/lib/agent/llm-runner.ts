@@ -46,7 +46,7 @@ export async function runLLM(
   ctx: AgentContext,
   model?: string
 ): Promise<LLMRunResult> {
-  const modelId = model ?? ctx.tenant.config.model ?? "gpt-4o-mini";
+  const modelId = model ?? ctx.tenant.config.model ?? "gpt-4o";
   const aiTools = convertToAISDKTools(tools, ctx);
   const coreMessages = convertMessages(messages);
 

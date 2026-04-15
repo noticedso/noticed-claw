@@ -40,7 +40,7 @@ export async function POST(req: Request) {
         user_id: user.id,
         name: user.email?.split("@")[0] ?? "user",
         config: {
-          model: "gpt-4o-mini",
+          model: "gpt-4o",
           persona: "donna",
           heartbeatEnabled: false,
           heartbeatIntervalMs: 3600000,

@@ -16,7 +16,7 @@ import { embed } from "ai";
 import { openai } from "@ai-sdk/openai";
 
 const DEFAULT_CONFIG: TenantConfig = {
-  model: "gpt-4o-mini",
+  model: "gpt-4o",
   persona: "donna",
   heartbeatEnabled: false,
   heartbeatIntervalMs: 3600000,

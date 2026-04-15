@@ -34,8 +34,8 @@ describe("workspace-files", () => {
     }
   });
 
-  it("AGENTS.md contains brand voice reference", () => {
-    expect(DEFAULT_WORKSPACE_FILES["AGENTS.md"]).toContain("brand voice");
+  it("AGENTS.md contains rules section", () => {
+    expect(DEFAULT_WORKSPACE_FILES["AGENTS.md"]).toContain("## rules");
   });
 
   it("IDENTITY.md contains agent name", () => {

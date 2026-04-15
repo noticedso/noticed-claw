@@ -2,19 +2,12 @@
 
 import { useChat } from "ai/react";
 import { useEffect, useRef, useState, useCallback } from "react";
-
-interface SessionInfo {
-  id: string;
-  session_key: string;
-  created_at: string;
-  updated_at: string;
-  total_tokens: number;
-}
+import { useSessions } from "@/hooks/use-sessions";
 
 export default function DashboardChatPage() {
-  const [sessions, setSessions] = useState<SessionInfo[]>([]);
+  const { sessions, loadingSessions, createSession, loadSessionMessages } =
+    useSessions();
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
-  const [loadingSessions, setLoadingSessions] = useState(true);
 
   const {
     messages,
@@ -29,55 +22,34 @@ export default function DashboardChatPage() {
   });
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const initializedRef = useRef(false);
 
-  const loadSessionMessages = useCallback(
+  const switchToSession = useCallback(
     async (sessionId: string) => {
-      try {
-        const res = await fetch(`/api/sessions/${sessionId}/messages`);
-        if (res.ok) {
-          const data: Array<{ id: string; role: string; content: string }> =
-            await res.json();
-          setMessages(
-            data.map((m) => ({
-              id: m.id,
-              role: m.role as "user" | "assistant",
-              content: m.content,
-            }))
-          );
-        } else {
-          setMessages([]);
-        }
-      } catch {
+      setActiveSessionId(sessionId);
+      const data = await loadSessionMessages(sessionId);
+      if (data) {
+        setMessages(
+          data.map((m) => ({
+            id: m.id,
+            role: m.role as "user" | "assistant",
+            content: m.content,
+          })),
+        );
+      } else {
         setMessages([]);
       }
     },
-    [setMessages]
+    [loadSessionMessages, setMessages],
   );
 
   useEffect(() => {
-    let mounted = true;
-    async function init() {
-      try {
-        const res = await fetch("/api/sessions");
-        if (res.ok && mounted) {
-          const data: SessionInfo[] = await res.json();
-          setSessions(data);
-          if (data.length > 0) {
-            setActiveSessionId(data[0].id);
-            loadSessionMessages(data[0].id);
-          }
-        }
-      } catch {
-        // ignore
-      } finally {
-        if (mounted) setLoadingSessions(false);
-      }
+    if (!loadingSessions && !initializedRef.current && sessions.length > 0) {
+      initializedRef.current = true;
+      setActiveSessionId(sessions[0].id);
+      switchToSession(sessions[0].id);
     }
-    init();
-    return () => {
-      mounted = false;
-    };
-  }, [loadSessionMessages]);
+  }, [loadingSessions, sessions, switchToSession]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -86,25 +58,20 @@ export default function DashboardChatPage() {
   }, [messages]);
 
   async function handleNewSession() {
-    try {
-      const res = await fetch("/api/sessions", { method: "POST" });
-      if (res.ok) {
-        const session: SessionInfo = await res.json();
-        setSessions((prev) => [session, ...prev]);
-        setActiveSessionId(session.id);
-        setMessages([]);
-      }
-    } catch {
-      // ignore
+    const session = await createSession();
+    if (session) {
+      setActiveSessionId(session.id);
+      setMessages([]);
     }
   }
 
   async function handleSessionChange(sessionId: string) {
-    setActiveSessionId(sessionId);
-    await loadSessionMessages(sessionId);
+    await switchToSession(sessionId);
   }
 
-  function formatSessionLabel(session: SessionInfo) {
+  function formatSessionLabel(session: {
+    created_at: string;
+  }) {
     const date = new Date(session.created_at);
     return date.toLocaleDateString(undefined, {
       month: "short",

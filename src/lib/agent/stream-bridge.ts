@@ -1,4 +1,4 @@
-import { streamText, tool, type CoreMessage } from "ai";
+import { streamText, tool, embed, generateText, type CoreMessage } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 import type { AgentTurnInput, AgentContext } from "./types";
@@ -8,6 +8,9 @@ import { resolveTools } from "./tools/registry";
 import { getAllBuiltinTools } from "./tools";
 import { searchCapabilities, CAPABILITIES } from "./tools/capability-registry";
 import { createServerClient } from "@/supabase/client";
+import { extractAndStoreMemories } from "./memory-manager";
+import { shouldCompact, compactSession } from "./compaction";
+import { upsertSessionSummary } from "./session-awareness";
 
 export const SILENT_TOKENS = ["NO_REPLY", "HEARTBEAT_OK"] as const;
 
@@ -55,7 +58,7 @@ export async function runAgentTurnStreaming(
     coreMessages.push({ role: "user", content: input.userMessage });
   }
 
-  const modelId = ctx.tenant.config.model ?? "gpt-4o-mini";
+  const modelId = ctx.tenant.config.model ?? "gpt-4o";
 
   // Build Zod-based tools for streamText (AI SDK v4 requires Zod schemas)
   const streamTools = {
@@ -112,18 +115,103 @@ export async function runAgentTurnStreaming(
     tools: streamTools,
     maxSteps: 10,
     onFinish: async (event) => {
-      // Post-turn: store assistant message for dashboard visibility
-      if (event.text) {
-        const { error } = await supabase.from("messages").insert({
-          session_id: ctx.session.id,
-          role: "assistant",
-          content: event.text,
-          token_count: Math.ceil(event.text.length / 4),
-        });
-        if (error) console.error("Failed to store message:", error);
-      }
+      if (!event.text) return;
+
+      // 1. Store assistant message
+      const { error } = await supabase.from("messages").insert({
+        session_id: ctx.session.id,
+        role: "assistant",
+        content: event.text,
+        token_count: Math.ceil(event.text.length / 4),
+      });
+      if (error) console.error("Failed to store message:", error);
+
+      // 2. Fire-and-forget post-turn hooks
+      postTurnHooks(supabase, ctx, input.userMessage, event.text).catch((err) =>
+        console.error("Post-turn hooks error:", err)
+      );
     },
   });
 
   return result.toDataStreamResponse();
+}
+
+async function postTurnHooks(
+  supabase: ReturnType<typeof createServerClient>,
+  ctx: AgentContext,
+  userMessage: string,
+  assistantResponse: string
+): Promise<void> {
+  // Memory extraction — extract facts from the conversation turn
+  try {
+    const turnContent = `user: ${userMessage}\nassistant: ${assistantResponse}`;
+    const embedFn = async (text: string) => {
+      const { embedding } = await embed({
+        model: openai.embedding("text-embedding-3-small"),
+        value: text,
+      });
+      return embedding;
+    };
+    await extractAndStoreMemories(
+      supabase,
+      ctx.tenant.id,
+      ctx.session.id,
+      turnContent,
+      embedFn
+    );
+  } catch (err) {
+    console.error("Memory extraction failed:", err);
+  }
+
+  // Compaction check
+  const estimatedNewTokens = Math.ceil((userMessage.length + assistantResponse.length) / 4);
+  const newTotalTokens = ctx.session.totalTokens + estimatedNewTokens;
+  if (shouldCompact(newTotalTokens)) {
+    try {
+      const { data: messages } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("session_id", ctx.session.id)
+        .is("compacted_at", null)
+        .order("created_at", { ascending: true });
+
+      if (messages && messages.length > 0) {
+        const mapped = messages.map((m: Record<string, unknown>) => ({
+          id: m.id as string,
+          sessionId: m.session_id as string,
+          role: m.role as "user" | "assistant" | "system" | "tool",
+          content: m.content as string,
+          tokenCount: (m.token_count as number) ?? 0,
+          compactedAt: null,
+          createdAt: m.created_at as string,
+        }));
+        const summarizeFn = async (text: string) => {
+          const result = await generateText({
+            model: openai("gpt-4o-mini"),
+            system: "Summarize concisely. Preserve: active tasks, decisions, TODOs, key identifiers.",
+            messages: [{ role: "user", content: text }],
+          });
+          return result.text;
+        };
+        await compactSession(supabase, ctx.session.id, mapped, summarizeFn);
+      }
+    } catch (err) {
+      console.error("Compaction failed:", err);
+    }
+  }
+
+  // Session summary upsert
+  try {
+    const summaryText = `discussed: ${assistantResponse.substring(0, 200)}`;
+    await upsertSessionSummary(
+      supabase,
+      ctx.tenant.id,
+      ctx.session.id,
+      summaryText,
+      "recent_messages",
+      0
+    );
+  } catch (err) {
+    console.error("Session summary upsert failed:", err);
+  }
 }
