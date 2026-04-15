@@ -1,12 +1,12 @@
-import { streamText, type CoreMessage, type CoreTool } from "ai";
+import { streamText, tool, type CoreMessage } from "ai";
 import { openai } from "@ai-sdk/openai";
-import type { AgentTurnInput, ToolDefinition, AgentContext, Message } from "./types";
+import { z } from "zod";
+import type { AgentTurnInput, AgentContext, Message } from "./types";
 import { resolveAgentContext } from "./agent-router";
 import { buildSystemPrompt } from "./prompt-builder";
 import { resolveTools } from "./tools/registry";
 import { getAllBuiltinTools } from "./tools";
-import { getCodeModeTools } from "./tools/code-mode";
-import { MAX_TOOL_ITERATIONS } from "./llm-runner";
+import { searchCapabilities, CAPABILITIES } from "./tools/capability-registry";
 import { createServerClient } from "@/supabase/client";
 
 export const SILENT_TOKENS = ["NO_REPLY", "HEARTBEAT_OK"] as const;
@@ -14,23 +14,6 @@ export const SILENT_TOKENS = ["NO_REPLY", "HEARTBEAT_OK"] as const;
 export function isSilentReply(text: string): boolean {
   const trimmed = text.trim().substring(0, 20);
   return SILENT_TOKENS.some((token) => trimmed === token);
-}
-
-function convertToAISDKTools(
-  tools: ToolDefinition[],
-  ctx: AgentContext
-): Record<string, CoreTool> {
-  const sdkTools: Record<string, CoreTool> = {};
-  for (const tool of tools) {
-    sdkTools[tool.name] = {
-      description: tool.description,
-      parameters: tool.parameters as CoreTool["parameters"],
-      execute: async (args: Record<string, unknown>) => {
-        return tool.execute(args, ctx);
-      },
-    };
-  }
-  return sdkTools;
 }
 
 function convertMessages(messages: Message[]): CoreMessage[] {
@@ -50,7 +33,7 @@ export async function runAgentTurnStreaming(
   // Resolve context
   const ctx = await resolveAgentContext(supabase, input);
 
-  // Build tools
+  // Build tools for prompt (descriptions only)
   const builtinTools = getAllBuiltinTools();
   const resolvedTools = resolveTools(
     builtinTools,
@@ -58,58 +41,79 @@ export async function runAgentTurnStreaming(
     ctx.tenant.config.toolPolicy
   );
 
-  const executeCapability = async (
-    name: string,
-    args: Record<string, unknown>,
-    capCtx: AgentContext
-  ) => {
-    const tool = resolvedTools.find((t) => t.name === name);
-    if (!tool) throw new Error(`capability not found: ${name}`);
-    return tool.execute(args, capCtx);
-  };
-
-  const codeModeTools = getCodeModeTools(executeCapability);
-  const allTools = [...codeModeTools];
-
   const systemPrompt = buildSystemPrompt(ctx, "full", resolvedTools);
-  const aiTools = convertToAISDKTools(allTools, ctx);
   const coreMessages = convertMessages(ctx.messages);
-
-  // Add the new user message
   coreMessages.push({ role: "user", content: input.userMessage });
 
   const modelId = ctx.tenant.config.model ?? "gpt-4o-mini";
+
+  // Build Zod-based tools for streamText (AI SDK v4 requires Zod schemas)
+  const streamTools = {
+    search: tool({
+      description:
+        "search available capabilities by keyword. returns names, descriptions, and parameter schemas.",
+      parameters: z.object({
+        query: z.string().describe("search keywords"),
+        category: z
+          .string()
+          .optional()
+          .describe("optional category filter"),
+      }),
+      execute: async ({ query, category }) => {
+        let caps = CAPABILITIES;
+        if (category) caps = caps.filter((c) => c.category === category);
+        return searchCapabilities(caps, query, 5).map((r) => ({
+          name: r.name,
+          description: r.description,
+          category: r.category,
+        }));
+      },
+    }),
+    execute: tool({
+      description: "execute a capability by exact name with arguments",
+      parameters: z.object({
+        name: z.string().describe("capability name"),
+        args: z.record(z.unknown()).optional().describe("capability arguments"),
+      }),
+      execute: async ({ name, args }) => {
+        const t = resolvedTools.find((t) => t.name === name);
+        if (!t) return { error: `capability not found: ${name}` };
+        try {
+          return await t.execute(args ?? {}, ctx);
+        } catch (err) {
+          return { error: String(err) };
+        }
+      },
+    }),
+  };
+
+  // Store user message
+  await supabase.from("messages").insert({
+    session_id: ctx.session.id,
+    role: "user",
+    content: input.userMessage,
+    token_count: Math.ceil(input.userMessage.length / 4),
+  });
 
   const result = streamText({
     model: openai(modelId),
     system: systemPrompt,
     messages: coreMessages,
-    tools: aiTools,
-    maxSteps: MAX_TOOL_ITERATIONS,
+    tools: streamTools,
+    maxSteps: 10,
+    onFinish: async (event) => {
+      // Post-turn: store assistant message
+      if (event.text) {
+        const { error } = await supabase.from("messages").insert({
+          session_id: ctx.session.id,
+          role: "assistant",
+          content: event.text,
+          token_count: Math.ceil(event.text.length / 4),
+        });
+        if (error) console.error("Failed to store message:", error);
+      }
+    },
   });
 
-  // Buffer first chunk to check for silent reply
-  const textStream = result.textStream;
-  let firstChunk = "";
-  const reader = textStream.getReader();
-
-  try {
-    const { value, done } = await reader.read();
-    if (done || !value) {
-      return new Response("", { status: 200 });
-    }
-    firstChunk = value;
-
-    if (isSilentReply(firstChunk)) {
-      reader.releaseLock();
-      return new Response("", { status: 200 });
-    }
-  } catch {
-    return new Response("", { status: 200 });
-  }
-
-  reader.releaseLock();
-
-  // Return the full data stream response
   return result.toDataStreamResponse();
 }

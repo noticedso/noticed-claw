@@ -1,7 +1,7 @@
 -- 002_tenants.sql
 CREATE TABLE IF NOT EXISTS tenants (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL, -- no FK to auth.users for workshop flexibility
   name TEXT NOT NULL,
   config JSONB NOT NULL DEFAULT '{
     "model": "gpt-4o",

@@ -22,20 +22,30 @@ export async function POST(req: Request) {
     .limit(1)
     .single();
 
+  const DEMO_USER_ID = "00000000-0000-0000-0000-000000000001";
   const tenantId = tenant?.id ?? crypto.randomUUID();
-  const userId = tenant?.user_id ?? "demo-user";
+  const userId = tenant?.user_id ?? DEMO_USER_ID;
 
   const sessionKey = `tenant:${tenantId}:webchat:dm:${userId}`;
 
-  return runAgentTurnStreaming({
-    tenantId,
-    sessionKey,
-    userMessage: lastUserMessage.content,
-    platform: "webchat",
-    chatType: "dm",
-    peerId: userId,
-    dedupeKey: `webchat:${userId}:${Date.now()}`,
-  });
+  try {
+    return await runAgentTurnStreaming({
+      tenantId,
+      sessionKey,
+      userMessage: lastUserMessage.content,
+      platform: "webchat",
+      chatType: "dm",
+      peerId: userId,
+      dedupeKey: `webchat:${userId}:${Date.now()}`,
+    });
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.stack ?? err.message : JSON.stringify(err);
+    console.error("Chat API error:", errMsg);
+    return new Response(JSON.stringify({ error: errMsg }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 }
 
 export const maxDuration = 300;
