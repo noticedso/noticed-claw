@@ -38,9 +38,11 @@ export async function fsLs(
     case "/developers": {
       const { data } = await supabase
         .from("developer_profiles")
-        .select("login")
-        .order("login");
-      return (data ?? []).map((d: { login: string }) => `${d.login}.md`);
+        .select("login, name, skills")
+        .order("name");
+      return (data ?? []).map((d: { login: string; name: string; skills: string[] }) =>
+        `${d.login}.md — ${d.name} (${(d.skills ?? []).slice(0, 3).join(", ")})`
+      );
     }
 
     case "/connections": {

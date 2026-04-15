@@ -57,19 +57,19 @@ export const CAPABILITIES: Capability[] = [
   },
   {
     name: "fs_ls",
-    description: "list virtual filesystem directory",
+    description: "list directory with summaries. use fs_read for full profile details",
     category: "filesystem",
-    parameters: { path: { type: "string", description: "directory path" } },
+    parameters: { path: { type: "string", description: "directory path: /developers, /connections, /repos, /me" } },
   },
   {
     name: "fs_read",
-    description: "read a virtual filesystem file",
+    description: "read full developer profile: name, bio, skills, repos, activity. path like /developers/alexchen0.md",
     category: "filesystem",
-    parameters: { path: { type: "string", description: "file path" } },
+    parameters: { path: { type: "string", description: "file path e.g. /developers/alexchen0.md" } },
   },
   {
     name: "fs_grep",
-    description: "search virtual filesystem by pattern",
+    description: "search all developer profiles by keyword in name, bio, or skills. e.g. 'Rust' or 'distributed systems'",
     category: "filesystem",
     parameters: {
       pattern: { type: "string", description: "search pattern" },

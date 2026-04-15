@@ -5,7 +5,7 @@ import { fsLs, fsRead, fsGrep } from "../virtual-fs";
 export const fsLsTool: ToolDefinition = {
   name: "fs_ls",
   description:
-    "list virtual filesystem directory. paths: /me, /developers, /connections, /repos",
+    "list virtual filesystem directory with summaries. paths: /me, /developers, /connections, /repos. use fs_read to get full details on a specific developer.",
   profile: "standard",
   parameters: {
     type: "object",
@@ -27,7 +27,7 @@ export const fsLsTool: ToolDefinition = {
 export const fsReadTool: ToolDefinition = {
   name: "fs_read",
   description:
-    "read a virtual filesystem file. e.g. /developers/alice.md, /me/profile.md",
+    "read full details of a developer profile or file. e.g. /developers/alexchen0.md returns name, bio, skills, repos, activity. also: /me/profile.md",
   profile: "standard",
   parameters: {
     type: "object",
@@ -49,7 +49,7 @@ export const fsReadTool: ToolDefinition = {
 export const fsGrepTool: ToolDefinition = {
   name: "fs_grep",
   description:
-    "search virtual filesystem by keyword pattern across developer profiles (name, bio, skills)",
+    "search all developer profiles by keyword. matches against name, bio, and skills. e.g. 'Rust' finds everyone with Rust skills. returns matching profiles with context.",
   profile: "standard",
   parameters: {
     type: "object",
