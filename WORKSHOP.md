@@ -50,7 +50,7 @@ Claude Code, OpenClaw, Codex, Deep Agents - these are all harnesses. the harness
 
 `noticed-claw` is a multi-tenant agent harness, a compact version of noticed's agent-core.
 
-| #   | pillar         | what it owns                                   | key files                                                            |
+| #   | subsystem      | what it owns                                   | key files                                                            |
 | --- | -------------- | ---------------------------------------------- | -------------------------------------------------------------------- |
 | 1   | **identity**   | prompt builder + brand voice + persona         | `prompt-builder.ts`, `brand-voice.ts`, `persona-catalog.ts`          |
 | 2   | **memory**     | extract, embed, dedup, recall                  | `memory-manager.ts`, `memory-extract.ts`, `memory-flush.ts`          |
@@ -59,6 +59,7 @@ Claude Code, OpenClaw, Codex, Deep Agents - these are all harnesses. the harness
 | 5   | **tools**      | registry + capability discovery + policy       | `tools/registry.ts`, `tools/capability-registry.ts`, `llm-runner.ts` |
 | 6   | **sessions**   | router + session manager + thread queue        | `agent-router.ts`, `session-manager.ts`, `thread-queue.ts`           |
 | 7   | **automation** | heartbeat + cron                               | `heartbeat.ts`, `cron.ts`, `tools/cron-tool.ts`                      |
+| 8   | **evals**      | measure, compare, improve                      | `src/eval/`                                                          |
 
 the orchestration layer ties it all together in `agent-turn.ts`:
 
