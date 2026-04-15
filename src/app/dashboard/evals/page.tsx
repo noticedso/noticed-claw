@@ -1,6 +1,8 @@
 import { getEvalRuns } from "@/lib/dashboard/queries";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 export default async function EvalsPage() {
   const runs = await getEvalRuns();
 

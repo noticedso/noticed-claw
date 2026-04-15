@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { getDashboardStats, getAllTenants } from "@/lib/dashboard/queries";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardOverviewPage() {
   const [stats, tenants] = await Promise.all([
     getDashboardStats(),
