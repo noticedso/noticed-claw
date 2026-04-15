@@ -30,13 +30,21 @@ export function buildSystemPrompt(
 
   if (mode === "minimal") return sections.join("\n\n");
 
-  // 4. Tool instructions
-  if (tools && tools.length > 0) {
-    const toolList = tools
-      .map((t) => `- **${t.name}**: ${t.description}`)
-      .join("\n");
-    sections.push(`# available tools\n${toolList}`);
-  }
+  // 4. Tool instructions — code mode (search + execute)
+  sections.push(`# how to use tools
+you have two meta-tools: **search** and **execute**.
+
+1. call **search** with a keyword to discover available capabilities
+2. call **execute** with the capability name and args to run it
+
+example flow:
+- user asks "who knows Rust?" → search({query: "search developers"}) → finds fs_grep → execute({name: "fs_grep", args: {pattern: "Rust"}})
+- user says "update my identity" → execute({name: "workspace_write", args: {file: "IDENTITY.md", content: "..."}})
+
+you do NOT need to search first if you already know the capability name. just call execute directly.
+
+available capabilities: ${(tools ?? []).map((t) => t.name).join(", ")}`);
+
 
   // 5. Memory recall
   if (ctx.memories.length > 0) {

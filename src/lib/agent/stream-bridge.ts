@@ -111,11 +111,18 @@ export async function runAgentTurnStreaming(
         args: z.record(z.unknown()).optional().describe("capability arguments"),
       }),
       execute: async ({ name, args }) => {
-        const t = resolvedTools.find((t) => t.name === name);
-        if (!t) return { error: `capability not found: ${name}` };
+        const t = resolvedTools.find((tool) => tool.name === name);
+        if (!t) {
+          const available = resolvedTools.map((tool) => tool.name).join(", ");
+          console.error(`[execute] capability not found: "${name}". available: ${available}`);
+          return { error: `capability not found: ${name}. available: ${available}` };
+        }
         try {
-          return await t.execute(args ?? {}, ctx);
+          const result = await t.execute(args ?? {}, ctx);
+          console.log(`[execute] ${name} succeeded:`, typeof result === "string" ? result.substring(0, 100) : JSON.stringify(result).substring(0, 100));
+          return result;
         } catch (err) {
+          console.error(`[execute] ${name} threw:`, err);
           return { error: String(err) };
         }
       },
