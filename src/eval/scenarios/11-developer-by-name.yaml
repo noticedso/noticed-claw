@@ -1,0 +1,11 @@
+key: developer_by_name
+description: Agent finds and displays a developer profile when asked by name (not login)
+messages:
+  - role: user
+    content: "tell me about Casey Santos"
+expected:
+  uses_fs_read: true
+  returns_bio: true
+  returns_skills: true
+  returns_repos: true
+  does_not_say_not_found: true
