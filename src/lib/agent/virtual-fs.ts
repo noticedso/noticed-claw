@@ -8,7 +8,8 @@ export interface ParsedPath {
   subPath: string | null;
 }
 
-export function parsePath(path: string): ParsedPath {
+export function parsePath(path: string | undefined | null): ParsedPath {
+  if (!path) return { root: "/" as VirtualRoot, subPath: null };
   const cleaned = path.startsWith("/") ? path : `/${path}`;
   const parts = cleaned.split("/").filter(Boolean);
   const root = `/${parts[0]}` as VirtualRoot;

@@ -19,7 +19,8 @@ export const fsLsTool: ToolDefinition = {
   },
   execute: async (args: Record<string, unknown>, ctx: AgentContext) => {
     const supabase = createServerClient();
-    return fsLs(supabase, ctx.tenant.id, args.path as string);
+    const path = (args.path as string) ?? "/";
+    return fsLs(supabase, ctx.tenant.id, path);
   },
 };
 
@@ -40,7 +41,8 @@ export const fsReadTool: ToolDefinition = {
   },
   execute: async (args: Record<string, unknown>, ctx: AgentContext) => {
     const supabase = createServerClient();
-    return fsRead(supabase, ctx.tenant.id, args.path as string);
+    const path = (args.path as string) ?? "/";
+    return fsRead(supabase, ctx.tenant.id, path);
   },
 };
 
@@ -61,7 +63,8 @@ export const fsGrepTool: ToolDefinition = {
   },
   execute: async (args: Record<string, unknown>, ctx: AgentContext) => {
     const supabase = createServerClient();
-    return fsGrep(supabase, ctx.tenant.id, args.pattern as string);
+    const pattern = (args.pattern as string) ?? "";
+    return fsGrep(supabase, ctx.tenant.id, pattern);
   },
 };
 
