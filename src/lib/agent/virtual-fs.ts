@@ -181,32 +181,72 @@ export async function fsGrep(
   _tenantId: string,
   pattern: string
 ): Promise<Array<{ path: string; matches: string[] }>> {
-  const lowerPattern = pattern.toLowerCase();
+  const results: Array<{ path: string; matches: string[] }> = [];
 
-  // Search by name, bio, and skills
+  // 1. Semantic search via embeddings
+  try {
+    const { embed } = await import("ai");
+    const { openai } = await import("@ai-sdk/openai");
+    const { embedding } = await embed({
+      model: openai.embedding("text-embedding-3-small"),
+      value: pattern,
+    });
+
+    const { data: semanticResults } = await supabase.rpc("match_developer_profiles", {
+      query_embedding: embedding,
+      match_count: 20,
+      min_score: 0.15,
+    });
+
+    if (semanticResults && semanticResults.length > 0) {
+      for (const r of semanticResults) {
+        const skills = (r.skills as string[]) ?? [];
+        const similarity = Math.round((r.similarity as number) * 100);
+        results.push({
+          path: `/developers/${r.login}.md`,
+          matches: [
+            `${r.name} (${similarity}% match)`,
+            `skills: ${skills.join(", ")}`,
+            `bio: ${r.bio}`,
+          ],
+        });
+      }
+      return results;
+    }
+  } catch {
+    // Fall through to keyword search if embedding fails
+  }
+
+  // 2. Fallback: keyword search (name, bio, skills)
+  const lowerPattern = pattern.toLowerCase();
+  const tokens = lowerPattern.split(/[\s\/,]+/).filter(Boolean);
+
   const { data } = await supabase
     .from("developer_profiles")
     .select("login, name, bio, skills");
 
   if (!data) return [];
 
-  const results: Array<{ path: string; matches: string[] }> = [];
-
   for (const profile of data) {
     const matches: string[] = [];
     const p = profile as { login: string; name: string; bio: string; skills: string[] };
+    const haystack = `${p.name} ${p.bio} ${(p.skills ?? []).join(" ")}`.toLowerCase();
 
-    if (p.name?.toLowerCase().includes(lowerPattern)) {
-      matches.push(`name: ${p.name}`);
-    }
-    if (p.bio?.toLowerCase().includes(lowerPattern)) {
-      matches.push(`bio: ${p.bio}`);
-    }
-    if (p.skills?.some((s: string) => s.toLowerCase().includes(lowerPattern))) {
-      const matchingSkills = p.skills.filter((s: string) =>
-        s.toLowerCase().includes(lowerPattern)
-      );
-      matches.push(`skills: ${matchingSkills.join(", ")}`);
+    // Match if ANY token appears in the profile
+    const matchedTokens = tokens.filter((t) => haystack.includes(t));
+    if (matchedTokens.length > 0) {
+      if (p.skills?.some((s) => tokens.some((t) => s.toLowerCase().includes(t)))) {
+        const matchingSkills = p.skills.filter((s) =>
+          tokens.some((t) => s.toLowerCase().includes(t))
+        );
+        matches.push(`skills: ${matchingSkills.join(", ")}`);
+      }
+      if (tokens.some((t) => p.bio?.toLowerCase().includes(t))) {
+        matches.push(`bio: ${p.bio}`);
+      }
+      if (tokens.some((t) => p.name?.toLowerCase().includes(t))) {
+        matches.push(`name: ${p.name}`);
+      }
     }
 
     if (matches.length > 0) {
