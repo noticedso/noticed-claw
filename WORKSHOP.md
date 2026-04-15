@@ -63,6 +63,8 @@ the reason is simple: most agent harnesses are built for **one user running one 
 
 the orchestration layer ties it all together in `agent-turn.ts` - it acquires the thread lock, resolves context, builds tools, runs the LLM, handles compaction and memory flush, and updates session summaries.
 
+OpenClaw didn't work because you can't have multiple agents in the same system. this is our interpretation of an OpenClaw-like system that solves the multi-tenant problem through Postgres' Row Level Security for user-owned data.
+
 ---
 
 ## 5. demo: talk to your agent
