@@ -1,4 +1,5 @@
-import { createAuthServerClient, createServerClient } from "@/supabase/client";
+import { createAuthServerClient } from "@/supabase/auth-client";
+import { createServerClient } from "@/supabase/client";
 import { runAgentTurnStreaming } from "@/lib/agent/stream-bridge";
 
 export async function POST(req: Request) {
