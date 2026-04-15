@@ -1,7 +1,7 @@
 import { streamText, tool, type CoreMessage } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
-import type { AgentTurnInput, AgentContext, Message } from "./types";
+import type { AgentTurnInput, AgentContext } from "./types";
 import { resolveAgentContext } from "./agent-router";
 import { buildSystemPrompt } from "./prompt-builder";
 import { resolveTools } from "./tools/registry";
@@ -16,21 +16,13 @@ export function isSilentReply(text: string): boolean {
   return SILENT_TOKENS.some((token) => trimmed === token);
 }
 
-function convertMessages(messages: Message[]): CoreMessage[] {
-  return messages
-    .filter((m) => !m.compactedAt)
-    .map((m) => ({
-      role: m.role === "tool" ? "assistant" : m.role,
-      content: m.content,
-    })) as CoreMessage[];
-}
-
 export async function runAgentTurnStreaming(
-  input: AgentTurnInput
+  input: AgentTurnInput,
+  clientMessages?: Array<{ role: string; content: string }>
 ): Promise<Response> {
   const supabase = createServerClient();
 
-  // Resolve context
+  // Resolve context (for tenant, session, workspace, memories, etc.)
   const ctx = await resolveAgentContext(supabase, input);
 
   // Build tools for prompt (descriptions only)
@@ -42,8 +34,26 @@ export async function runAgentTurnStreaming(
   );
 
   const systemPrompt = buildSystemPrompt(ctx, "full", resolvedTools);
-  const coreMessages = convertMessages(ctx.messages);
-  coreMessages.push({ role: "user", content: input.userMessage });
+
+  // Use client-provided messages if available (useChat pattern),
+  // otherwise fall back to DB-loaded messages + new user message
+  let coreMessages: CoreMessage[];
+  if (clientMessages && clientMessages.length > 0) {
+    coreMessages = clientMessages
+      .filter((m) => m.role === "user" || m.role === "assistant")
+      .map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      }));
+  } else {
+    coreMessages = ctx.messages
+      .filter((m) => !m.compactedAt)
+      .map((m) => ({
+        role: (m.role === "tool" ? "assistant" : m.role) as "user" | "assistant" | "system",
+        content: m.content,
+      }));
+    coreMessages.push({ role: "user", content: input.userMessage });
+  }
 
   const modelId = ctx.tenant.config.model ?? "gpt-4o-mini";
 
@@ -87,7 +97,7 @@ export async function runAgentTurnStreaming(
     }),
   };
 
-  // Store user message
+  // Store user message in DB for dashboard visibility
   await supabase.from("messages").insert({
     session_id: ctx.session.id,
     role: "user",
@@ -102,7 +112,7 @@ export async function runAgentTurnStreaming(
     tools: streamTools,
     maxSteps: 10,
     onFinish: async (event) => {
-      // Post-turn: store assistant message
+      // Post-turn: store assistant message for dashboard visibility
       if (event.text) {
         const { error } = await supabase.from("messages").insert({
           session_id: ctx.session.id,

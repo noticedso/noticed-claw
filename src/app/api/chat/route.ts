@@ -29,15 +29,18 @@ export async function POST(req: Request) {
   const sessionKey = `tenant:${tenantId}:webchat:dm:${userId}`;
 
   try {
-    return await runAgentTurnStreaming({
-      tenantId,
-      sessionKey,
-      userMessage: lastUserMessage.content,
-      platform: "webchat",
-      chatType: "dm",
-      peerId: userId,
-      dedupeKey: `webchat:${userId}:${Date.now()}`,
-    });
+    return await runAgentTurnStreaming(
+      {
+        tenantId,
+        sessionKey,
+        userMessage: lastUserMessage.content,
+        platform: "webchat",
+        chatType: "dm",
+        peerId: userId,
+        dedupeKey: `webchat:${userId}:${Date.now()}`,
+      },
+      messages
+    );
   } catch (err) {
     const errMsg = err instanceof Error ? err.stack ?? err.message : JSON.stringify(err);
     console.error("Chat API error:", errMsg);
