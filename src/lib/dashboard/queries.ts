@@ -28,11 +28,41 @@ export async function getDashboardStats() {
 
 export async function getAllTenants() {
   const supabase = createServerClient();
-  const { data } = await supabase
+  const { data: tenants } = await supabase
     .from("tenants")
     .select("*")
     .order("created_at", { ascending: false });
-  return data ?? [];
+
+  if (!tenants || tenants.length === 0) return [];
+
+  // Look up user emails from auth.users
+  const userIds = [...new Set(tenants.map((t) => t.user_id as string))];
+  const emailMap = await getUserEmails(supabase, userIds);
+
+  return tenants.map((t) => ({
+    ...t,
+    user_email: emailMap.get(t.user_id as string) ?? null,
+  }));
+}
+
+async function getUserEmails(
+  supabase: ReturnType<typeof createServerClient>,
+  userIds: string[]
+): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  try {
+    const { data } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+    if (data?.users) {
+      for (const user of data.users) {
+        if (userIds.includes(user.id) && user.email) {
+          map.set(user.id, user.email);
+        }
+      }
+    }
+  } catch {
+    // auth.admin may not be available in all environments
+  }
+  return map;
 }
 
 export async function getTenantById(tenantId: string) {

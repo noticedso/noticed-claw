@@ -49,6 +49,7 @@ export default async function DashboardOverviewPage() {
           <thead>
             <tr className="border-b border-zinc-200 text-xs uppercase text-zinc-500">
               <th className="py-2 pr-4">Name</th>
+              <th className="py-2 pr-4">User</th>
               <th className="py-2 pr-4">Model</th>
               <th className="py-2 pr-4">Persona</th>
               <th className="py-2 pr-4">Created</th>
@@ -65,6 +66,9 @@ export default async function DashboardOverviewPage() {
                 >
                   <td className="py-2 pr-4 font-medium text-zinc-900">
                     {t.name as string}
+                  </td>
+                  <td className="py-2 pr-4 text-zinc-500 text-xs">
+                    {(t.user_email as string) ?? "-"}
                   </td>
                   <td className="py-2 pr-4 text-zinc-600">
                     {(config.model as string) ?? "-"}
