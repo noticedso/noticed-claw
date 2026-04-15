@@ -51,15 +51,15 @@ most agent harnesses are built for **one user running one agent**. OpenClaw read
 
 **every component that a single-user harness handles implicitly must become an explicit, tenant-scoped subsystem.**
 
-**tenant isolation.** user A's memories, conversations, and workspace must be invisible to user B. row-level security on every table.
+- **tenant isolation.** user A's memories, conversations, and workspace must be invisible to user B. row-level security on every table.
 
-**session identity.** the same user talks to your agent on webchat, telegram, and slack. the agent needs to know about all its conversations - but keep each session's history separate.
+- **session identity.** the same user talks to your agent on webchat, telegram, and slack. the agent needs to know about all its conversations - but keep each session's history separate.
 
-**context economics.** memory, compaction, and embeddings cost money per user. one user's unbounded conversation can't blow your budget for everyone else.
+- **context economics.** memory, compaction, and embeddings cost money per user. one user's unbounded conversation can't blow your budget for everyone else.
 
-**concurrent webhooks.** telegram sends duplicate webhooks. slack retries on timeout. you need thread-level locking so the agent doesn't respond twice to the same message.
+- **concurrent webhooks.** telegram sends duplicate webhooks. slack retries on timeout. you need thread-level locking so the agent doesn't respond twice to the same message.
 
-**proactive behavior at scale.** one user's heartbeat cron is a `setInterval`. a thousand users' heartbeats are a shared automation runner that respects each tenant's timezone and active hours.
+- **proactive behavior at scale.** one user's heartbeat cron is a `setInterval`. a thousand users' heartbeats are a shared automation runner that respects each tenant's timezone and active hours.
 
 ---
 
@@ -67,18 +67,17 @@ most agent harnesses are built for **one user running one agent**. OpenClaw read
 
 this repo is a self-contained implementation of a multi-tenant agent harness
 
-### the 8 building blocks
+### the 7 pillars
 
-| #   | block                     | what it does                                              | single → multi-tenant challenge             |
-| --- | ------------------------- | --------------------------------------------------------- | ------------------------------------------- |
-| 1   | **tenant isolation**      | RLS policies scope every query by `tenant_id`             | doesn't exist in single-tenant              |
-| 2   | **session management**    | composite key: `tenant:channel:chatType:peerId`           | single-tenant has one implicit session      |
-| 3   | **persona + brand voice** | immutable brand rules + swappable persona per tenant      | single-tenant has one hardcoded personality |
-| 4   | **semantic memory**       | two-tier (daily/curated) with pgvector embeddings + dedup | single-tenant uses flat files               |
-| 5   | **context compaction**    | summarize when tokens > 48k, soft-archive messages        | single-tenant has no cost pressure          |
-| 6   | **tool policy engine**    | profile levels (minimal/standard/full) + allow/deny       | single-tenant exposes all tools             |
-| 7   | **code mode**             | 2 meta-tools (search + execute) over capability registry  | single-tenant sends all tools every turn    |
-| 8   | **proactive automation**  | heartbeat + cron with timezone-aware active hours         | single-tenant uses local cron               |
+| #   | pillar         | what it owns                                                                  |
+| --- | -------------- | ----------------------------------------------------------------------------- |
+| 1   | **identity**   | prompt builder + brand voice + persona - who is the agent?                    |
+| 2   | **memory**     | extract, embed, dedup, recall - what does it remember?                        |
+| 3   | **context**    | workspace files + session awareness + missions - what does it know right now? |
+| 4   | **compaction** | summarize + soft-archive - how does it stay within bounds?                    |
+| 5   | **tools**      | registry + capability discovery + policy - what can it do?                    |
+| 6   | **sessions**   | router + session manager + thread queue - who is it talking to, and where?    |
+| 7   | **automation** | heartbeat + cron - when does it act on its own?                               |
 
 ---
 
