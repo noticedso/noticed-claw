@@ -25,6 +25,11 @@ export async function fsLs(
 
   if (subPath) return []; // No nested directories
 
+  // Root listing
+  if (path === "/" || path === "" || !["me", "developers", "connections", "repos"].includes(root.replace("/", ""))) {
+    return ["/me", "/developers", "/connections", "/repos"];
+  }
+
   switch (root) {
     case "/me":
       return ["profile.md", "activity.md", "skills.md"];
