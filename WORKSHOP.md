@@ -94,18 +94,18 @@ here's how the pieces fit together:
 ┌─────────────────────────────────────────────────────────────────┐
 │                        INBOUND LAYER                            │
 │                                                                 │
-│   ┌──────────┐    ┌──────────┐    ┌──────────┐                  │
-│   │  WebChat  │    │ Telegram │    │  Slack   │    ...           │
-│   │ (AI SDK)  │    │(Chat SDK)│    │(Chat SDK)│                  │
-│   └────┬─────┘    └────┬─────┘    └────┬─────┘                  │
-│        │               │               │                        │
-│        └───────────────┬┴───────────────┘                        │
+│   ┌──────────┐     ┌──────────┐    ┌──────────┐                 │
+│   │  WebChat │     │ Telegram │    │  Slack   │    ...          │
+│   │ (AI SDK) │     │(Chat SDK)│    │(Chat SDK)│                 │
+│   └────┬─────┘     └────┬─────┘    └────┬─────┘                 │
+│        │                │               │                       │
+│        └───────────────┬┴───────────────┘                       │
 │                        │                                        │
 │                        ▼                                        │
 │              ┌─────────────────┐                                │
 │              │  agent router   │ ── resolve tenant + session    │
 │              └────────┬────────┘                                │
-│                       │                                        │
+│                       │                                         │
 │              ┌────────▼────────┐                                │
 │              │  thread queue   │ ── dedupe concurrent messages  │
 │              └────────┬────────┘                                │
@@ -118,17 +118,17 @@ here's how the pieces fit together:
 │         ├──────────┬──────────┬───────┤                         │
 │         │          │          │       │                         │
 │         ▼          ▼          ▼       ▼                         │
-│   ┌──────────┐ ┌────────┐ ┌──────┐ ┌──────────┐               │
+│   ┌──────────┐ ┌────────┐ ┌──────┐ ┌──────────┐                 │
 │   │workspace │ │ memory │ │missions│ │ session  │               │
-│   │  files   │ │ recall │ │+goals │ │awareness │               │
-│   │ (7 docs) │ │(pgvec) │ │       │ │          │               │
-│   └──────────┘ └────────┘ └──────┘ └──────────┘               │
+│   │  files   │ │ recall │ │+goals │ │awareness │                │
+│   │ (7 docs) │ │(pgvec) │ │       │ │          │                │
+│   └──────────┘ └────────┘ └──────┘ └──────────┘                 │
 │         │          │          │       │                         │
 │         └──────────┴──────────┴───────┘                         │
-│                       │                                        │
+│                       │                                         │
 │              ┌────────▼────────┐                                │
 │              │ prompt builder  │ ── identity + brand voice      │
-│              │                 │    + persona + context          │
+│              │                 │    + persona + context         │
 │              └────────┬────────┘                                │
 └───────────────────────┼─────────────────────────────────────────┘
                         │
@@ -137,17 +137,17 @@ here's how the pieces fit together:
 │              ┌─────────────────┐                                │
 │              │   LLM runner    │ ── tool-call loop (max 10)     │
 │              └────────┬────────┘                                │
-│                       │                                        │
+│                       │                                         │
 │         ┌─────────────┼─────────────────┐                       │
 │         ▼             ▼                 ▼                       │
-│   ┌──────────┐  ┌──────────┐     ┌──────────┐                  │
-│   │  search  │  │ execute  │     │ built-in │                  │
-│   │(discover)│  │(run cap) │     │  tools   │                  │
-│   └──────────┘  └──────────┘     │ web, fs, │                  │
-│         code mode                │ memory,  │                  │
-│     (2 meta-tools)               │ cron ... │                  │
-│                                  └──────────┘                  │
-│                       │                                        │
+│   ┌──────────┐  ┌──────────┐     ┌──────────┐                   │
+│   │  search  │  │ execute  │     │ built-in │                   │
+│   │(discover)│  │(run cap) │     │  tools   │                   │
+│   └──────────┘  └──────────┘     │ web, fs, │                   │
+│         code mode                │ memory,  │                   │
+│     (2 meta-tools)               │ cron ... │                   │
+│                                  └──────────┘                   │
+│                       │                                         │
 │              ┌────────▼────────┐                                │
 │              │ stream bridge   │ ── silent reply detection      │
 │              └────────┬────────┘                                │
@@ -160,12 +160,12 @@ here's how the pieces fit together:
 │         ├──────────┬──────────┬───────┤                         │
 │         │          │          │       │                         │
 │         ▼          ▼          ▼       ▼                         │
-│   ┌──────────┐ ┌────────┐ ┌──────┐ ┌──────────┐               │
-│   │  store   │ │extract │ │check │ │ verify   │               │
-│   │ message  │ │memories│ │token │ │checkpoint│               │
-│   │          │ │        │ │count │ │          │               │
-│   └──────────┘ └────────┘ └──┬───┘ └──────────┘               │
-│                              │                                 │
+│   ┌──────────┐ ┌────────┐ ┌──────┐ ┌──────────┐                 │
+│   │  store   │ │extract │ │check │ │ verify   │                 │
+│   │ message  │ │memories│ │token │ │checkpoint│                 │
+│   │          │ │        │ │count │ │          │                 │
+│   └──────────┘ └────────┘ └──┬───┘ └──────────┘                 │
+│                              │                                  │
 │                    ┌─────────▼─────────┐                        │
 │                    │ compact if > 48k  │                        │
 │                    └───────────────────┘                        │
@@ -175,7 +175,7 @@ here's how the pieces fit together:
 │                       ▼         PROACTIVE LAYER                 │
 │                                                                 │
 │   ┌──────────────────────────────────────────┐                  │
-│   │            /api/agent-cron                │                  │
+│   │            /api/agent-cron               │                  │
 │   │         (every 5 minutes)                │                  │
 │   └──────────┬───────────────┬───────────────┘                  │
 │              │               │                                  │
@@ -183,11 +183,11 @@ here's how the pieces fit together:
 │        ┌──────────┐    ┌──────────┐                             │
 │        │heartbeat │    │  cron    │                             │
 │        │          │    │  jobs    │                             │
-│        │check     │    │         │                             │
-│        │active    │    │at/every/│                             │
-│        │hours,    │    │cron expr│                             │
-│        │send if   │    │         │                             │
-│        │relevant  │    │timezone │                             │
+│        │check     │    │          │                             │
+│        │active    │    │at/every/ │                             │
+│        │hours,    │    │cron expr │                             │
+│        │send if   │    │          │                             │
+│        │relevant  │    │timezone  │                             │
 │        └──────────┘    └──────────┘                             │
 │                                                                 │
 │   the agent doesn't just respond — it reaches out               │
@@ -237,16 +237,16 @@ the key insight: every box in that diagram is scoped by `tenant_id`. one deploym
 
 ### the 8 building blocks
 
-| # | block | what it does | why it matters for multi-tenant |
-|---|-------|-------------|-------------------------------|
-| 1 | **tenant isolation** | RLS policies scope every query by `tenant_id` | users can never see each other's data |
-| 2 | **session management** | composite key: `tenant:id:channel:chatType:peerId` | same user, multiple platforms, separate histories |
-| 3 | **persona + brand voice** | immutable brand rules + swappable persona overlay | brand consistency across all tenants, personality per tenant |
-| 4 | **semantic memory** | two-tier (daily/curated) with pgvector embeddings | each tenant's agent remembers independently, with dedup |
-| 5 | **context compaction** | summarize when tokens > 48k, soft-archive messages | bounded memory cost per tenant, unbounded conversation length |
-| 6 | **tool policy engine** | profile levels (minimal/standard/full) + allow/deny | different tenants get different capabilities |
-| 7 | **code mode** | 2 meta-tools (search + execute) over capability registry | 30+ capabilities without paying context cost per tenant turn |
-| 8 | **proactive automation** | heartbeat + cron with timezone-aware active hours | agents act independently per tenant's schedule |
+| #   | block                     | what it does                                             | why it matters for multi-tenant                               |
+| --- | ------------------------- | -------------------------------------------------------- | ------------------------------------------------------------- |
+| 1   | **tenant isolation**      | RLS policies scope every query by `tenant_id`            | users can never see each other's data                         |
+| 2   | **session management**    | composite key: `tenant:id:channel:chatType:peerId`       | same user, multiple platforms, separate histories             |
+| 3   | **persona + brand voice** | immutable brand rules + swappable persona overlay        | brand consistency across all tenants, personality per tenant  |
+| 4   | **semantic memory**       | two-tier (daily/curated) with pgvector embeddings        | each tenant's agent remembers independently, with dedup       |
+| 5   | **context compaction**    | summarize when tokens > 48k, soft-archive messages       | bounded memory cost per tenant, unbounded conversation length |
+| 6   | **tool policy engine**    | profile levels (minimal/standard/full) + allow/deny      | different tenants get different capabilities                  |
+| 7   | **code mode**             | 2 meta-tools (search + execute) over capability registry | 30+ capabilities without paying context cost per tenant turn  |
+| 8   | **proactive automation**  | heartbeat + cron with timezone-aware active hours        | agents act independently per tenant's schedule                |
 
 ---
 
@@ -346,14 +346,14 @@ open http://localhost:3012/chat
 
 the eval system scores the agent on 6 dimensions (0-10):
 
-| dimension | what it measures |
-|-----------|-----------------|
-| coherence | does the response make sense and follow naturally? |
-| persona_adherence | does the tone match the active persona? |
-| tool_usage | did the agent use tools appropriately? |
-| brand_voice_compliance | lowercase, no filler, concise? |
-| task_completion | did the agent accomplish what the user needed? |
-| memory_quality | did the agent use relevant context? |
+| dimension              | what it measures                                   |
+| ---------------------- | -------------------------------------------------- |
+| coherence              | does the response make sense and follow naturally? |
+| persona_adherence      | does the tone match the active persona?            |
+| tool_usage             | did the agent use tools appropriately?             |
+| brand_voice_compliance | lowercase, no filler, concise?                     |
+| task_completion        | did the agent accomplish what the user needed?     |
+| memory_quality         | did the agent use relevant context?                |
 
 ### run the baseline
 
@@ -427,18 +427,18 @@ this is the same loop we use in production. evals are the unit tests of agent be
 
 13 tables, all scoped by `tenant_id` with row-level security:
 
-| table | rows per tenant | purpose |
-|-------|----------------|---------|
-| tenants | 1 | config, persona, heartbeat schedule |
-| sessions | ~5-20 | one per channel/platform combo |
-| messages | hundreds-thousands | conversation history |
-| memories | tens-hundreds | semantic memory with embeddings |
-| compaction_summaries | ~1 per compaction | compressed message history |
-| missions | ~3-5 | onboarding, audience building, outreach |
-| workspace_files | 7 | agent personality and behavior docs |
-| cron_jobs | 0-10 | scheduled tasks |
-| session_summaries | ~1 per session | cross-session awareness |
-| thread_inbound_queue | transient | webhook dedup |
-| developer_profiles | 100 (shared) | seeded virtual filesystem data |
-| eval_runs | per eval execution | eval history |
-| eval_results | per scenario per run | scores + reasoning |
+| table                | rows per tenant      | purpose                                 |
+| -------------------- | -------------------- | --------------------------------------- |
+| tenants              | 1                    | config, persona, heartbeat schedule     |
+| sessions             | ~5-20                | one per channel/platform combo          |
+| messages             | hundreds-thousands   | conversation history                    |
+| memories             | tens-hundreds        | semantic memory with embeddings         |
+| compaction_summaries | ~1 per compaction    | compressed message history              |
+| missions             | ~3-5                 | onboarding, audience building, outreach |
+| workspace_files      | 7                    | agent personality and behavior docs     |
+| cron_jobs            | 0-10                 | scheduled tasks                         |
+| session_summaries    | ~1 per session       | cross-session awareness                 |
+| thread_inbound_queue | transient            | webhook dedup                           |
+| developer_profiles   | 100 (shared)         | seeded virtual filesystem data          |
+| eval_runs            | per eval execution   | eval history                            |
+| eval_results         | per scenario per run | scores + reasoning                      |

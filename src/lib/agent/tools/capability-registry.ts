@@ -1,0 +1,104 @@
+import type { Capability } from "../types";
+
+export function scoreCapability(cap: Capability, query: string): number {
+  const q = query.toLowerCase();
+  const name = cap.name.toLowerCase();
+  const desc = cap.description.toLowerCase();
+
+  if (name === q) return 3;
+  if (name.startsWith(q)) return 2;
+
+  const tokens = q.split(/\s+/);
+  return tokens.filter((t) => name.includes(t) || desc.includes(t)).length;
+}
+
+export function searchCapabilities(
+  capabilities: Capability[],
+  query: string,
+  limit: number
+): Capability[] {
+  return capabilities
+    .map((cap) => ({ cap, score: scoreCapability(cap, query) }))
+    .filter(({ score }) => score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map(({ cap }) => cap);
+}
+
+export const CAPABILITIES: Capability[] = [
+  {
+    name: "memory_search",
+    description: "search memories by semantic similarity",
+    category: "memory",
+    parameters: { query: { type: "string", description: "search query" } },
+  },
+  {
+    name: "memory_get",
+    description: "get a specific memory by ID",
+    category: "memory",
+    parameters: { id: { type: "string", description: "memory ID" } },
+  },
+  {
+    name: "workspace_write",
+    description: "update a workspace file",
+    category: "workspace",
+    parameters: {
+      file: { type: "string", description: "file name" },
+      content: { type: "string", description: "new content" },
+    },
+  },
+  {
+    name: "cron",
+    description: "manage scheduled jobs (add, update, remove, list)",
+    category: "scheduling",
+    parameters: {
+      action: { type: "string", description: "add | update | remove | list" },
+    },
+  },
+  {
+    name: "fs_ls",
+    description: "list virtual filesystem directory",
+    category: "filesystem",
+    parameters: { path: { type: "string", description: "directory path" } },
+  },
+  {
+    name: "fs_read",
+    description: "read a virtual filesystem file",
+    category: "filesystem",
+    parameters: { path: { type: "string", description: "file path" } },
+  },
+  {
+    name: "fs_grep",
+    description: "search virtual filesystem by pattern",
+    category: "filesystem",
+    parameters: {
+      pattern: { type: "string", description: "search pattern" },
+    },
+  },
+  {
+    name: "web_search",
+    description: "search the web for information",
+    category: "web",
+    parameters: { query: { type: "string", description: "search query" } },
+  },
+  {
+    name: "web_fetch",
+    description: "fetch and extract content from a URL",
+    category: "web",
+    parameters: { url: { type: "string", description: "URL to fetch" } },
+  },
+  {
+    name: "conversation_search",
+    description: "search conversation history by keyword",
+    category: "sessions",
+    parameters: { query: { type: "string", description: "search query" } },
+  },
+  {
+    name: "conversation_browse",
+    description: "browse messages in a session",
+    category: "sessions",
+    parameters: {
+      sessionId: { type: "string", description: "session ID" },
+    },
+  },
+];

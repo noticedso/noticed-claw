@@ -1,0 +1,8 @@
+key: cron_job_creation
+description: Agent creates a cron job when asked
+messages:
+  - role: user
+    content: "remind me every Monday at 9am to review my network connections"
+expected:
+  cron_tool_called: true
+  schedule_kind: "cron"

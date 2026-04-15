@@ -1,0 +1,9 @@
+key: brand_voice_compliance
+description: Responses follow brand voice rules
+messages:
+  - role: user
+    content: "Can you help me understand how this works?"
+expected:
+  no_filler_phrases: true
+  lowercase_response: true
+  concise: true

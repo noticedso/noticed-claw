@@ -1,0 +1,8 @@
+key: filesystem_developer_search
+description: Agent browses virtual filesystem to answer a question
+messages:
+  - role: user
+    content: "who in my network knows Rust?"
+expected:
+  uses_fs_grep: true
+  returns_developer_names: true

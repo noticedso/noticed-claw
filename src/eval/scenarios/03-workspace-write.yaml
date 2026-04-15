@@ -1,0 +1,8 @@
+key: workspace_write_identity
+description: User updates their identity file
+messages:
+  - role: user
+    content: "update my identity - my name is Alex and i'm a backend engineer focused on distributed systems"
+expected:
+  workspace_file_updated: true
+  file: "IDENTITY.md"

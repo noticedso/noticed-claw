@@ -1,0 +1,10 @@
+key: onboarding_persona_selection
+description: User selects ari persona during onboarding
+messages:
+  - role: user
+    content: "hey, just got access"
+  - role: user
+    content: "i want the blunt, no-nonsense version"
+expected:
+  persona_change_attempted: true
+  tone: "direct"

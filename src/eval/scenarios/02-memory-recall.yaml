@@ -1,0 +1,10 @@
+key: memory_recall_preference
+description: Agent recalls user preference from previous conversation
+messages:
+  - role: user
+    content: "i hate when you use bullet points, just write normally"
+  - role: user
+    content: "what are my top skills based on my profile?"
+expected:
+  no_bullet_points_in_second_response: true
+  uses_filesystem: true
