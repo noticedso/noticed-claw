@@ -40,7 +40,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // Redirect to login if not authenticated
-  if (!user && (pathname.startsWith("/chat") || pathname.startsWith("/dashboard") || pathname.startsWith("/api/chat"))) {
+  if (!user && (pathname.startsWith("/dashboard") || pathname.startsWith("/api/chat"))) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
