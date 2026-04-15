@@ -1,6 +1,10 @@
 import { createServerClient } from "@/supabase/client";
 
 export async function getDashboardStats() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  console.log(`[dashboard] url=${url?.substring(0, 30)} key=${key ? key.substring(0, 20) + '...' : 'MISSING'}`);
+
   const supabase = createServerClient();
   const [tenants, sessions, messages, memories, evalRuns] = await Promise.all([
     supabase.from("tenants").select("id", { count: "exact", head: true }),
@@ -17,6 +21,10 @@ export async function getDashboardStats() {
       .limit(1)
       .maybeSingle(),
   ]);
+  console.log(`[dashboard] tenants: count=${tenants.count} error=${tenants.error?.message ?? 'none'}`);
+  console.log(`[dashboard] sessions: count=${sessions.count} error=${sessions.error?.message ?? 'none'}`);
+  console.log(`[dashboard] messages: count=${messages.count} error=${messages.error?.message ?? 'none'}`);
+
   return {
     tenantCount: tenants.count ?? 0,
     activeSessionCount: sessions.count ?? 0,
