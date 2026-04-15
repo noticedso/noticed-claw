@@ -108,12 +108,36 @@ export async function fsRead(
     }
 
     case "/developers": {
-      const { data } = await supabase
+      // Try exact login match first
+      let { data } = await supabase
         .from("developer_profiles")
         .select("*")
         .eq("login", name)
-        .single();
-      if (!data) return `developer "${name}" not found`;
+        .maybeSingle();
+
+      // Fallback: search by name (case-insensitive)
+      if (!data) {
+        const { data: byName } = await supabase
+          .from("developer_profiles")
+          .select("*")
+          .ilike("name", `%${name.replace(/[0-9]+$/, "").replace(/([a-z])([A-Z])/g, "$1 $2")}%`)
+          .limit(1)
+          .maybeSingle();
+        data = byName;
+      }
+
+      // Fallback: fuzzy login match (strip .md, lowercase)
+      if (!data) {
+        const { data: fuzzy } = await supabase
+          .from("developer_profiles")
+          .select("*")
+          .ilike("login", `%${name.toLowerCase().replace(/[^a-z0-9]/g, "")}%`)
+          .limit(1)
+          .maybeSingle();
+        data = fuzzy;
+      }
+
+      if (!data) return `developer "${name}" not found. use fs_ls to see available profiles.`;
       return formatFullProfile(data);
     }
 
