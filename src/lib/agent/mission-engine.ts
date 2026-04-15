@@ -122,6 +122,38 @@ export async function createMission(
   return mapMissionRow(data);
 }
 
+export async function createGoal(
+  supabase: SupabaseClient,
+  tenantId: string,
+  title: string,
+  objective: string,
+  checkpointDescriptions?: string[]
+): Promise<Mission> {
+  const checkpoints: Checkpoint[] = (checkpointDescriptions ?? []).map((desc, i) => ({
+    key: `step_${i + 1}`,
+    description: desc,
+    completed: false,
+  }));
+
+  const { data, error } = await supabase
+    .from("missions")
+    .insert({
+      tenant_id: tenantId,
+      kind: "goal",
+      mission_type: null,
+      status: "active" as MissionStatus,
+      title,
+      objective,
+      checkpoints,
+      started_at: new Date().toISOString(),
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return mapMissionRow(data);
+}
+
 export async function completeCheckpoint(
   supabase: SupabaseClient,
   missionId: string,

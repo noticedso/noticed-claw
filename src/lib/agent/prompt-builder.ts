@@ -66,6 +66,12 @@ execute({name: "cron", args: {action: "add", name: "followup", schedule_kind: "a
 **list scheduled jobs:**
 execute({name: "cron", args: {action: "list"}})
 
+**set a goal/mission:**
+execute({name: "mission", args: {action: "set_goal", title: "master distributed systems", objective: "learn and contribute to distributed systems projects", checkpoints: ["read 3 papers on consensus", "contribute to a distributed db repo", "build a demo project"]}})
+
+**list missions and goals:**
+execute({name: "mission", args: {action: "list"}})
+
 ## critical rules
 - when someone asks for details about a developer, use fs_read with their login path, NOT fs_grep with their login name
 - when someone asks to be reminded, use the cron tool - never suggest they use an external app

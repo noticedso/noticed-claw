@@ -56,6 +56,16 @@ export const CAPABILITIES: Capability[] = [
     },
   },
   {
+    name: "mission",
+    description: "manage goals and missions. set_goal creates a new goal with title, objective, and checkpoints. list shows current missions/goals. complete_checkpoint marks progress.",
+    category: "missions",
+    parameters: {
+      action: { type: "string", description: "set_goal | list | complete_checkpoint" },
+      title: { type: "string", description: "goal title" },
+      objective: { type: "string", description: "what to achieve" },
+    },
+  },
+  {
     name: "fs_ls",
     description: "list directory with summaries. use fs_read for full profile details",
     category: "filesystem",

@@ -1,0 +1,10 @@
+key: set_mission_from_profile
+description: Agent looks up a developer profile and sets a goal based on their expertise
+messages:
+  - role: user
+    content: "look at what ash chen does and set my mission based on their expertise"
+expected:
+  uses_fs_read_or_fs_grep: true
+  uses_mission_set_goal: true
+  goal_reflects_developer_skills: true
+  goal_persisted: true
