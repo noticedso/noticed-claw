@@ -1,5 +1,5 @@
 key: onboarding_persona_selection
-description: User selects ari persona during onboarding
+description: User selects ari persona during onboarding. Agent should use switch_persona tool to change from default donna to ari.
 messages:
   - role: user
     content: "hey, just got access"
@@ -7,4 +7,6 @@ messages:
     content: "i want the blunt, no-nonsense version"
 expected:
   persona_change_attempted: true
+  tool_called: "switch_persona"
+  tool_args_contain: "ari"
   tone: "direct"

@@ -99,7 +99,7 @@ open http://localhost:3012/dashboard/chat
 
 5. **cross-session awareness** - open a second session, ask the agent what it's been up to
 
-6. **persona selection** - "i want the blunt, no-nonsense version" (switches to ari) -> this won't work.
+6. **persona selection** - "i want the blunt, no-nonsense version" (switches to ari)
 
 ---
 
@@ -111,4 +111,4 @@ evals are how you measure whether changes to your harness actually make things b
 npm run eval
 ```
 
-results are saved to `eval-results/`. let's try to improve the persona selection by creating a new eval.
+results are saved to `eval-results/`.

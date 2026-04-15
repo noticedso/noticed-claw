@@ -6,6 +6,7 @@ import { workspaceWriteTool } from "./workspace-write";
 import { cronTool } from "./cron-tool";
 import { fsTools } from "./fs-tools";
 import { missionTool } from "./mission-tool";
+import { personaTool } from "./persona-tool";
 
 export function getAllBuiltinTools(): ToolDefinition[] {
   return [
@@ -15,6 +16,7 @@ export function getAllBuiltinTools(): ToolDefinition[] {
     workspaceWriteTool,
     cronTool,
     missionTool,
+    personaTool,
     ...fsTools,
   ];
 }
@@ -26,5 +28,6 @@ export {
   workspaceWriteTool,
   cronTool,
   missionTool,
+  personaTool,
   fsTools,
 };

@@ -63,6 +63,9 @@ execute({name: "cron", args: {action: "add", name: "weekly review", schedule_kin
 **schedule a one-time reminder:**
 execute({name: "cron", args: {action: "add", name: "followup", schedule_kind: "at", schedule_value: "2026-04-20T14:00:00Z", payload: "follow up with alex"}})
 
+**switch persona:**
+execute({name: "switch_persona", args: {persona: "ari"}})
+
 **list scheduled jobs:**
 execute({name: "cron", args: {action: "list"}})
 
@@ -77,6 +80,7 @@ execute({name: "mission", args: {action: "list"}})
 - when someone asks to be reminded, use the cron tool - never suggest they use an external app
 - when you learn the user's name, role, or any personal info, IMMEDIATELY call workspace_write to update USER.md. do this before responding
 - when you learn something about your own identity or personality, update IDENTITY.md or SOUL.md
+- when a user asks to change your persona or wants a different communication style (e.g. "be more direct", "switch to ari", "i want the blunt version"), use switch_persona to change it
 - workspace_write requires the FULL file content, not just the changes. read the current content from the workspace section below, apply the update, and write the complete result
 
 available capabilities: ${(tools ?? []).map((t) => t.name).join(", ")}`);

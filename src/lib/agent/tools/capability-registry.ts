@@ -111,4 +111,16 @@ export const CAPABILITIES: Capability[] = [
       sessionId: { type: "string", description: "session ID" },
     },
   },
+  {
+    name: "switch_persona",
+    description:
+      "switch the agent's persona. ari (direct, blunt), donna (strategic, warm), ted (enthusiastic, supportive)",
+    category: "identity",
+    parameters: {
+      persona: {
+        type: "string",
+        description: "persona key: ari, donna, or ted",
+      },
+    },
+  },
 ];
