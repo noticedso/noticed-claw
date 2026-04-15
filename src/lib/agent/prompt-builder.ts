@@ -84,7 +84,13 @@ available capabilities: ${(tools ?? []).map((t) => t.name).join(", ")}`);
           `- [${m.category}] ${m.content} (relevance: ${(m.similarity * 100).toFixed(0)}%)`,
       )
       .join("\n");
-    sections.push(`# relevant memories\n${memoryLines}`);
+    sections.push(`# relevant memories
+these are facts recalled from your long-term memory about this user. use them to personalize your responses. if the user asks about their memories or what you know about them, reference these directly.
+
+${memoryLines}`);
+  } else {
+    sections.push(`# memories
+no memories recalled for this query. you can search memories explicitly using the memory_search capability if the user asks about what you remember.`);
   }
 
   // 6. Workspace files

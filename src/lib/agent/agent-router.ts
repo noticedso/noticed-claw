@@ -165,9 +165,14 @@ async function embedAndRecall(
       model: openai.embedding("text-embedding-3-small"),
       value: userMessage,
     });
-    return recallMemories(supabase, tenantId, embedding, 5);
-  } catch {
-    // If embedding fails (e.g., no API key), return empty
+    const memories = await recallMemories(supabase, tenantId, embedding, 5);
+    console.log(`[agent-router] recalled ${memories.length} memories for "${userMessage.substring(0, 50)}"`);
+    if (memories.length > 0) {
+      console.log(`[agent-router] top memory: "${memories[0].content.substring(0, 80)}" (similarity: ${memories[0].similarity})`);
+    }
+    return memories;
+  } catch (err) {
+    console.error("[agent-router] memory recall failed:", err);
     return [];
   }
 }

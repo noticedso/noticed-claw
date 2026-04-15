@@ -25,7 +25,7 @@ export async function recallMemories(
   tenantId: string,
   queryEmbedding: number[],
   count: number = 5,
-  minScore: number = 0.5
+  minScore: number = 0.15
 ): Promise<MemoryRecall[]> {
   const { data, error } = await supabase.rpc("match_memories", {
     query_embedding: queryEmbedding,

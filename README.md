@@ -2,15 +2,9 @@
 
 a multi-tenant agent workshop built on [noticed](https://noticed.so)'s production architecture.
 
-68 source files. 29 test files. 197 tests. 10 eval scenarios. one `npm run dev` to start.
-
 ## what is this
 
-a self-contained Next.js app that teaches multi-tenant agent architecture — the kind that runs independent AI agent instances for thousands of users on shared infrastructure.
-
-each user gets their own persona, memory, workspace files, scheduled jobs, and conversation history. all isolated by tenant, all on one deployment.
-
-built for the workshop: **"Cloning OpenClaw to run in the cloud for thousands of users"**
+a self-contained Next.js multi-tenant agent architecture where each user gets their own persona, memory, workspace files, scheduled jobs, and conversation history.
 
 see [WORKSHOP.md](WORKSHOP.md) for the full guide.
 
@@ -93,28 +87,14 @@ src/
 
 ## commands
 
-| command | what it does |
-|---------|-------------|
-| `npm run dev` | start dev server on :3012 |
-| `npm run build` | production build |
-| `npm run test` | run 197 vitest tests |
-| `npm run lint` | eslint with 4 architecture rules |
-| `npm run seed` | seed 100 developer profiles |
-| `npm run eval` | run 10 eval scenarios, output CSV |
-
-## architecture
-
-two meta-tools (search + execute) give the LLM access to 9 capabilities without paying the context cost of 9 tool definitions on every turn.
-
-```
-user message
-  → agent-router (resolve tenant + session)
-  → prompt-builder (identity + brand voice + persona + tools + memory + workspace)
-  → LLM with search/execute tools
-  → post-turn hooks (memory extraction, compaction check, session summary)
-```
-
-every query is scoped by `tenant_id` via Supabase RLS. one deployment, many agents.
+| command         | what it does                      |
+| --------------- | --------------------------------- |
+| `npm run dev`   | start dev server on :3012         |
+| `npm run build` | production build                  |
+| `npm run test`  | run 197 vitest tests              |
+| `npm run lint`  | eslint with 4 architecture rules  |
+| `npm run seed`  | seed 100 developer profiles       |
+| `npm run eval`  | run 10 eval scenarios, output CSV |
 
 ## eval system
 
@@ -122,12 +102,10 @@ every query is scoped by `tenant_id` via Supabase RLS. one deployment, many agen
 npm run eval
 ```
 
-scores 10 scenarios across 6 dimensions (0-10):
+scores scenarios across 6 dimensions (0-10):
 coherence, persona adherence, tool usage, brand voice compliance, task completion, memory quality.
 
 outputs CSV to `eval-results/` for comparison across runs.
-
-we went from 5.8 to 8.2 average in 4 iterations — see [WORKSHOP.md](WORKSHOP.md#7-improve-with-evals) for the full walkthrough.
 
 ## tech stack
 
@@ -137,7 +115,3 @@ we went from 5.8 to 8.2 average in 4 iterations — see [WORKSHOP.md](WORKSHOP.m
 - **Vitest** — unit + integration tests
 - **Tailwind CSS** — dashboard styling
 - **ESLint** — 4 custom architecture enforcement rules
-
-## license
-
-MIT
