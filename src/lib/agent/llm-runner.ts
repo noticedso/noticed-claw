@@ -71,6 +71,8 @@ export async function runLLM(
     }),
   };
 
+  console.log(`[runLLM] model=${modelId} messages=${coreMessages.length} tools=${Object.keys(zodTools).join(",")}`);
+
   const result = await generateText({
     model: openai(modelId),
     system: systemPrompt,
@@ -79,14 +81,20 @@ export async function runLLM(
     maxSteps: MAX_TOOL_ITERATIONS,
   });
 
+  console.log(`[runLLM] steps=${result.steps?.length ?? 0} text="${result.text?.substring(0, 80)}..." finishReason=${result.finishReason}`);
+
   const allToolCalls: ToolCall[] = [];
   for (const step of result.steps ?? []) {
     for (const tc of step.toolCalls ?? []) {
+      console.log(`[runLLM] tool call: ${tc.toolName}(${JSON.stringify(tc.args).substring(0, 200)})`);
       allToolCalls.push({
         id: tc.toolCallId,
         name: tc.toolName,
         args: tc.args as Record<string, unknown>,
       });
+    }
+    for (const tr of step.toolResults ?? []) {
+      console.log(`[runLLM] tool result: ${tr.toolName} → ${JSON.stringify(tr.result).substring(0, 200)}`);
     }
   }
 

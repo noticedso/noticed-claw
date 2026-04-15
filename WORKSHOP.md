@@ -206,15 +206,121 @@ open http://localhost:3012/chat
 
 ## 7. improve with evals
 
+### run the baseline
+
 ```bash
 npm run eval
 ```
 
-the eval system scores 6 dimensions (0-10): coherence, persona adherence, tool usage, brand voice compliance, task completion, memory quality.
+each run outputs scores to the terminal AND saves a CSV to `eval-results/`:
 
-the loop: run evals → read scores + reasoning → pick lowest scenario → make a targeted change → run evals again → compare.
+```
+results:
+  onboarding_persona_selection: 8.3/10 (tool:7 task:8)
+  workspace_update_user: 5.8/10 (tool:3 task:3)     <-- weak spot
+  ...
+average: 7.5/10
 
-this is the same loop we use in production. evals are the unit tests of agent behavior.
+csv: eval-results/eval-2026-04-15T07-55-16.csv
+```
+
+### the eval loop (walkthrough)
+
+this is a real example from building this workshop. we started at 5.8/10 and got to 8.2/10 in 4 iterations.
+
+**iteration 1: baseline (5.8/10)**
+
+problem: all scenarios scored 0 because `runAgentTurn` passed an empty messages array to the LLM.
+
+```
+InvalidPromptError: messages must not be empty
+```
+
+fix: append user message to `ctx.messages` before calling `runLLM`.
+
+**iteration 2: tool wiring (7.4/10)**
+
+problem: `llm-runner.ts` passed raw JSON Schema tool definitions but AI SDK v4 requires Zod schemas. the LLM had tools defined but couldn't call them.
+
+```
+judge: "the agent did not use fs_read to retrieve developer details"
+judge: "did not perform the expected search or return developer names"
+```
+
+fix: rewrote `llm-runner.ts` to build Zod-based `search`/`execute` tools. expanded prompt with `fs_ls → fs_read` chain examples.
+
+**iteration 3: cron patterns (7.9/10)**
+
+problem: user asked "remind me every Monday at 9am" and the agent said "use a calendar app."
+
+```
+judge: "the agent did not use the appropriate tool to set up a cron job"
+```
+
+fix: added cron tool examples to the system prompt with exact arg shapes.
+
+**iteration 4: workspace writes + transcript visibility (8.2/10)**
+
+problem: `workspace_update_user` scored 5.8 with tool:3 — but the agent WAS calling `workspace_write`. the eval transcript only captured text responses, not tool calls, so the judge couldn't see them.
+
+```
+[runLLM] tool call: execute({"name":"workspace_write","args":{"file":"USER.md",...}})
+[runLLM] tool result: execute → {"success":true,"file":"USER.md"}
+```
+
+fix: added tool calls to the eval transcript. also added a "mandatory behavior" rule to the prompt: "when you learn the user's name, IMMEDIATELY call workspace_write to update USER.md."
+
+result:
+
+| scenario | run 1 | run 4 |
+|----------|-------|-------|
+| developer_details | 3.3 | 9.2 |
+| workspace_update_user | - | 8.3 |
+| cron_job_creation | 4.7 | 9.0 |
+| skill_search | 5.8 | 8.8 |
+| filesystem_developer_search | 6.0 | 9.0 |
+| **average** | **5.8** | **8.2** |
+
+### try it yourself
+
+1. run `npm run eval` and check `eval-results/` for the CSV
+2. find the lowest-scoring scenario
+3. read the judge reasoning in the CSV or at `/dashboard/evals`
+4. make a change — usually in `src/lib/agent/prompt-builder.ts` (tool instructions) or `src/lib/agent/workspace-files.ts` (agent rules)
+5. run `npm run eval` again
+6. compare CSVs — did the target improve? did anything regress?
+
+```bash
+# compare two runs side by side
+diff eval-results/eval-2026-04-15T07-55-16.csv eval-results/eval-2026-04-15T08-05-25.csv
+```
+
+### what to try improving
+
+- **workspace writes on user info** — does the agent update USER.md when you tell it your name?
+- **persona consistency** — does ari sound blunt? does ted sound enthusiastic?
+- **tool choice** — does the agent use `fs_read` (not `fs_grep`) for developer details?
+- **brand voice** — lowercase, no filler, concise?
+- **memory recall** — does the agent remember preferences from earlier in the session?
+
+### adding new scenarios
+
+create a YAML file in `src/eval/scenarios/`:
+
+```yaml
+key: my_new_scenario
+description: what this tests
+messages:
+  - role: user
+    content: "the user's message"
+  - role: user
+    content: "a follow-up message"
+expected:
+  some_check: true
+  another_check: "expected value"
+```
+
+the `expected` field is passed to the LLM judge as context. the judge uses it to evaluate the transcript, but it's not a hard assertion — it's guidance for scoring.
 
 ---
 

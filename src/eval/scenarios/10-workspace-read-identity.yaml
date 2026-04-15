@@ -1,0 +1,9 @@
+key: workspace_read_identity
+description: Agent reads workspace files to answer questions about itself
+messages:
+  - role: user
+    content: "what's your name and what kind of agent are you?"
+expected:
+  response_references_identity: true
+  response_includes_name: true
+  no_hallucinated_capabilities: true

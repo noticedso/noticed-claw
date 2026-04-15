@@ -53,6 +53,15 @@ export async function runEvals(): Promise<EvalRun> {
             peerId: "eval-runner",
           });
 
+          // Capture tool calls in transcript so judge can evaluate tool usage
+          if (result.toolCalls && result.toolCalls.length > 0) {
+            for (const tc of result.toolCalls) {
+              transcript.push({
+                role: "tool",
+                content: `[called ${tc.name}(${JSON.stringify(tc.args).substring(0, 200)})]`,
+              });
+            }
+          }
           if (result.content) {
             transcript.push({ role: "assistant", content: result.content });
           }
@@ -87,20 +96,25 @@ export async function runEvals(): Promise<EvalRun> {
         avgScore: 0,
       });
     } finally {
-      // Cleanup: delete eval tenant data
-      await supabase.from("messages").delete().eq(
-        "session_id",
-        (
-          await supabase
-            .from("sessions")
-            .select("id")
-            .eq("tenant_id", tenantId)
-        ).data?.[0]?.id ?? ""
-      );
+      // Wait for post-turn hooks to settle before cleanup
+      await new Promise((r) => setTimeout(r, 2000));
+
+      // Cleanup: delete eval tenant data (order matters for FK constraints)
+      const { data: sessions } = await supabase
+        .from("sessions")
+        .select("id")
+        .eq("tenant_id", tenantId);
+      const sessionIds = (sessions ?? []).map((s: { id: string }) => s.id);
+      if (sessionIds.length > 0) {
+        await supabase.from("messages").delete().in("session_id", sessionIds);
+        await supabase.from("compaction_summaries").delete().in("session_id", sessionIds);
+      }
+      await supabase.from("session_summaries").delete().eq("tenant_id", tenantId);
       await supabase.from("sessions").delete().eq("tenant_id", tenantId);
       await supabase.from("workspace_files").delete().eq("tenant_id", tenantId);
       await supabase.from("memories").delete().eq("tenant_id", tenantId);
       await supabase.from("missions").delete().eq("tenant_id", tenantId);
+      await supabase.from("cron_jobs").delete().eq("tenant_id", tenantId);
       await supabase.from("tenants").delete().eq("id", tenantId);
     }
   }

@@ -21,7 +21,7 @@ describe("loadScenarios", () => {
 
   it("returns exactly 6 scenarios", () => {
     const scenarios = loadScenarios();
-    expect(scenarios).toHaveLength(8);
+    expect(scenarios).toHaveLength(10);
   });
 
   it("scenarios are sorted by filename", () => {

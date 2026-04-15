@@ -133,6 +133,7 @@ export async function runAgentTurn(
       output: result.tokens.output,
       total: totalTokens,
     },
+    toolCalls: result.toolCalls,
   };
 }
 

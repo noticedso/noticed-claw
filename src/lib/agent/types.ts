@@ -198,6 +198,7 @@ export interface AgentTurnResult {
   silent: boolean;
   sessionId: string;
   tokens: { input: number; output: number; total: number };
+  toolCalls?: ToolCall[];
 }
 
 export interface ToolDefinition {

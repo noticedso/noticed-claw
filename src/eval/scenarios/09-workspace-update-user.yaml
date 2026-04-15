@@ -1,0 +1,10 @@
+key: workspace_update_user
+description: Agent must call workspace_write to update USER.md when user shares their name and role
+messages:
+  - role: user
+    content: "my name is sarah and i'm a platform engineer at a fintech startup"
+expected:
+  workspace_write_called: true
+  file_updated: "USER.md"
+  content_includes_name: true
+  content_includes_role: true
