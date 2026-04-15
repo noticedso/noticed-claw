@@ -2,9 +2,9 @@ import { describe, it, expect } from "vitest";
 import { getAllBuiltinTools } from "@/lib/agent/tools";
 
 describe("getAllBuiltinTools", () => {
-  it("returns 9 tools total", () => {
+  it("returns 10 tools total", () => {
     const tools = getAllBuiltinTools();
-    expect(tools).toHaveLength(9);
+    expect(tools).toHaveLength(10);
   });
 
   it("each tool has name, description, profile, parameters, execute", () => {

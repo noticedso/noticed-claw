@@ -63,8 +63,8 @@ describe("searchCapabilities", () => {
 });
 
 describe("CAPABILITIES", () => {
-  it("has 11 capabilities", () => {
-    expect(CAPABILITIES).toHaveLength(11);
+  it("has 12 capabilities", () => {
+    expect(CAPABILITIES).toHaveLength(12);
   });
 
   it("includes expected tool names", () => {
