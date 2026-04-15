@@ -2,7 +2,7 @@
 
 import { useChat } from "ai/react";
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useSessions } from "@/hooks/use-sessions";
+import { useSessions } from "./use-sessions";
 
 export default function DashboardChatPage() {
   const { sessions, loadingSessions, createSession, loadSessionMessages } =

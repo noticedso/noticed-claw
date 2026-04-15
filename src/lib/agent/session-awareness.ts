@@ -73,7 +73,7 @@ export async function upsertSessionSummary(
       message_count: messageCount,
       updated_at: new Date().toISOString(),
     },
-    { onConflict: "session_id" }
+    { onConflict: "tenant_id,session_id" }
   );
   if (error) throw error;
 }
